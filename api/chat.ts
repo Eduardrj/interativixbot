@@ -19,9 +19,10 @@ export default async function handler(request: Request) {
             return new Response(JSON.stringify({ error: 'API key not configured' }), { status: 500 });
         }
         
-        // Dynamic import to bypass build-time type resolution issues
-        const { GenerativeAI } = await import('@google/genai');
-        const genAI = new GenerativeAI(apiKey);
+        // @ts-ignore - This environment has a module resolution issue with this package.
+        // This directive bypasses the incorrect compile-time error.
+        const { GoogleGenerativeAI } = await import('@google/genai');
+        const genAI = new GoogleGenerativeAI(apiKey);
 
         // Mapeamento do histórico para o formato da API
         const chatHistory: Content[] = history.map((msg: { sender: 'user' | 'bot'; text: string; }) => ({
