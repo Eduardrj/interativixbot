@@ -63,7 +63,9 @@ const ChatSandbox: React.FC<{systemPrompt: string, aiModel: string}> = ({ system
 
 
             if (!response.ok) {
-                throw new Error(`API error: ${response.statusText}`);
+                const errorData = await response.json().catch(() => null);
+                const errorMessage = errorData?.error || `Erro na API: ${response.statusText}`;
+                throw new Error(errorMessage);
             }
 
 
@@ -73,7 +75,8 @@ const ChatSandbox: React.FC<{systemPrompt: string, aiModel: string}> = ({ system
 
         } catch (error) {
             console.error("Failed to get AI response:", error);
-            setMessages([...newMessages, { sender: 'bot' as 'bot', text: 'Desculpe, não consegui me conectar. Tente novamente mais tarde.' }]);
+            const friendlyMessage = error instanceof Error ? error.message : 'Não foi possível conectar.';
+            setMessages([...newMessages, { sender: 'bot' as 'bot', text: `Desculpe, ocorreu um erro: ${friendlyMessage}` }]);
         } finally {
             setIsLoading(false);
         }
