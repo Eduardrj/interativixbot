@@ -292,7 +292,7 @@ const Settings: React.FC = () => {
                             <path d="M95 10H105V20H95V10ZM115 10H125V20H115V10ZM95 30H105V40H95V30ZM115 30H125V40H115V30ZM95 50H105V60H95V50ZM115 50H125V60H115V50ZM95 70H105V80H95V70ZM115 70H125V80H115V70ZM95 90H105V100H95V90ZM115 90H125V100H115V90ZM95 110H105V120H95V110ZM115 110H125V120H115V110ZM95 130H105V140H95V130ZM115 130H125V140H115V130ZM95 150H105V160H95V150ZM115 150H125V160H115V150ZM95 170H105V180H95V170ZM115 170H125V180H115V170ZM95 190H105V200H95V190ZM115 190H125V200H115V190ZM10 95H20V105H10V95ZM30 95H40V105H30V95ZM50 95H60V105H50V95ZM70 95H80V105H70V95ZM130 95H140V105H130V95ZM150 95H160V105H150V95ZM170 95H180V105H170V95ZM190 95H200V105H190V95Z" fill="black"/>
                         </svg>
                     </div>
-                    <p className="text-xs text-gray-500 mt-4">1. Abra o WhatsApp no seu celular.<br/>2. Toque em Mais opções &gt; Aparelhos conectados.<br/>3. Toque em Conectar um aparelho.<br/>4. Aponte seu celular para esta tela.</p>
+                    <p className="text-xs text-gray-500 mt-4">1. Abra o WhatsApp no seu celular.<br/>2. Toque em Mais opções {'>'} Aparelhos conectados.<br/>3. Toque em Conectar um aparelho.<br/>4. Aponte seu celular para esta tela.</p>
                     <div className="mt-6">
                         <button onClick={handleQrCodeConnect} className="bg-success text-white font-bold py-2 px-6 rounded-lg shadow-md hover:bg-green-600 transition-colors">
                             Simular Conexão
