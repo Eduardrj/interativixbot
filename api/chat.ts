@@ -1,4 +1,3 @@
-// @ts-ignore
 import { GoogleGenAI, Chat, Content } from "@google/genai";
 
 // A Vercel exige que a função seja exportada como default
@@ -16,12 +15,13 @@ export default async function handler(request: Request) {
         }
 
         // 2. Inicialização Segura da API
-        // A API_KEY é pega das Environment Variables configuradas no painel da Vercel
-        const apiKey = process.env.API_KEY;
+        // A chave é lida da variável de ambiente GEMINI_API_KEY
+        const apiKey = process.env.GEMINI_API_KEY;
         if (!apiKey) {
             return new Response(JSON.stringify({ error: 'API key not configured' }), { status: 500 });
         }
         
+        // Corrigido: O construtor espera um objeto com a propriedade apiKey
         const ai = new GoogleGenAI({ apiKey });
 
         // 3. Mapeamento do Histórico para o formato da API
