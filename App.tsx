@@ -3,6 +3,7 @@ import Sidebar from './components/Sidebar';
 import Header from './components/Header';
 import type { Page } from './types';
 import { ICONS } from './constants';
+import { Toaster } from 'react-hot-toast';
 
 // Carregamento dinâmico (lazy loading) dos componentes de página
 const Dashboard = lazy(() => import('./components/Dashboard'));
@@ -48,26 +49,35 @@ const App: React.FC = () => {
     }
   };
 
-  if (!isLoggedIn) {
+  const AppContent = () => {
+    if (!isLoggedIn) {
+      return (
+        <Suspense fallback={<div className="flex h-screen w-full items-center justify-center bg-slate-50"><LoadingFallback /></div>}>
+          <LandingPage onLogin={() => setIsLoggedIn(true)} />
+        </Suspense>
+      );
+    }
+
     return (
-      <Suspense fallback={<div className="flex h-screen w-full items-center justify-center bg-slate-50"><LoadingFallback /></div>}>
-        <LandingPage onLogin={() => setIsLoggedIn(true)} />
-      </Suspense>
+      <div className="flex min-h-screen bg-slate-50 text-gray-800">
+        <Sidebar currentPage={currentPage} setCurrentPage={setCurrentPage} isOpen={isSidebarOpen} setOpen={setSidebarOpen} />
+        <div className="flex-1 flex flex-col overflow-hidden">
+          <Header toggleSidebar={() => setSidebarOpen(!isSidebarOpen)} />
+          <main className="flex-1 overflow-x-hidden overflow-y-auto bg-slate-100 p-4 sm:p-6 lg:p-8">
+            <Suspense fallback={<LoadingFallback />}>
+              {renderPage()}
+            </Suspense>
+          </main>
+        </div>
+      </div>
     );
-  }
+  };
 
   return (
-    <div className="flex min-h-screen bg-slate-50 text-gray-800">
-      <Sidebar currentPage={currentPage} setCurrentPage={setCurrentPage} isOpen={isSidebarOpen} setOpen={setSidebarOpen} />
-      <div className="flex-1 flex flex-col overflow-hidden">
-        <Header toggleSidebar={() => setSidebarOpen(!isSidebarOpen)} />
-        <main className="flex-1 overflow-x-hidden overflow-y-auto bg-slate-100 p-4 sm:p-6 lg:p-8">
-          <Suspense fallback={<LoadingFallback />}>
-            {renderPage()}
-          </Suspense>
-        </main>
-      </div>
-    </div>
+    <>
+      <Toaster position="top-center" reverseOrder={false} />
+      <AppContent />
+    </>
   );
 };
 

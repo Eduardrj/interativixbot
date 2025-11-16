@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { User, UserRole } from '../types';
 import { ICONS } from '../constants';
 import Modal from './Modal';
+import toast from 'react-hot-toast';
 
 const initialUsers: User[] = [
   { id: 'u1', name: 'Ana Silva', email: 'ana@example.com', role: UserRole.Atendente, avatarUrl: 'https://ui-avatars.com/api/?name=Ana+Silva&background=8B5CF6&color=fff' },
@@ -125,8 +126,8 @@ const ChatSandbox: React.FC<{systemPrompt: string, aiModel: string}> = ({ system
 
 const Settings: React.FC = () => {
     const [users, setUsers] = useState(initialUsers);
-    const [aiModel, setAiModel] = useState('gemini-2.5-pro');
-    const [systemPrompt, setSystemPrompt] = useState("Você é um assistente de agendamento para a plataforma Interativix-bot. Pergunte ao usuário qual serviço deseja, preferências de profissional, data e horário. Verifique disponibilidade, confirme dados do cliente e finalize o agendamento. Seja cordial e objetivo.");
+    const [aiModel, setAiModel] = useState(() => localStorage.getItem('aiModel') || 'gemini-2.5-pro');
+    const [systemPrompt, setSystemPrompt] = useState(() => localStorage.getItem('systemPrompt') || "Você é um assistente de agendamento para a plataforma Interativix-bot. Pergunte ao usuário qual serviço deseja, preferências de profissional, data e horário. Verifique disponibilidade, confirme dados do cliente e finalize o agendamento. Seja cordial e objetivo.");
     
     const [whatsappStatus, setWhatsappStatus] = useState<'connected' | 'disconnected'>('disconnected');
     const [isWhatsappModalOpen, setIsWhatsappModalOpen] = useState(false);
@@ -134,7 +135,11 @@ const Settings: React.FC = () => {
     const [apiUrl, setApiUrl] = useState('');
     const [apiKey, setApiKey] = useState('');
 
-
+    const handleSaveSettings = () => {
+        localStorage.setItem('aiModel', aiModel);
+        localStorage.setItem('systemPrompt', systemPrompt);
+        toast.success('Configurações de IA salvas com sucesso!');
+    };
 
     const handleRoleChange = (userId: string, newRole: UserRole) => {
         setUsers(users.map(user => user.id === userId ? { ...user, role: newRole } : user));
@@ -241,7 +246,7 @@ const Settings: React.FC = () => {
                              ></textarea>
                              <p className="mt-2 text-xs text-gray-500">Dica: Dê personalidade ao seu bot. Defina como ele deve saudar, se ele deve ser formal ou informal, etc.</p>
                         </div>
-                         <button className="w-full bg-primary text-white font-bold py-2 px-4 rounded-lg shadow-md hover:bg-primary-hover transition-colors">
+                         <button onClick={handleSaveSettings} className="w-full bg-primary text-white font-bold py-2 px-4 rounded-lg shadow-md hover:bg-primary-hover transition-colors">
                             Salvar Configurações de IA
                         </button>
                     </div>
