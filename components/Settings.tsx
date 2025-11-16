@@ -4,11 +4,13 @@ import { ICONS } from '../constants';
 import Modal from './Modal';
 import { GoogleGenAI } from "@google/genai";
 
+
 const initialUsers: User[] = [
   { id: 'u1', name: 'Ana Silva', email: 'ana@example.com', role: UserRole.Atendente, avatarUrl: 'https://ui-avatars.com/api/?name=Ana+Silva&background=8B5CF6&color=fff' },
   { id: 'u2', name: 'Bruno Costa', email: 'bruno@example.com', role: UserRole.Gerente, avatarUrl: 'https://ui-avatars.com/api/?name=Bruno+Costa&background=3B82F6&color=fff' },
   { id: 'u3', name: 'Admin', email: 'admin@interativix.com', role: UserRole.Administrador, avatarUrl: 'https://ui-avatars.com/api/?name=Admin&background=F97316&color=fff' },
 ];
+
 
 const SettingsCard: React.FC<{title: string; icon?: React.ReactNode; children: React.ReactNode}> = ({title, icon, children}) => (
     <div className="bg-white p-6 rounded-2xl shadow-md">
@@ -20,6 +22,7 @@ const SettingsCard: React.FC<{title: string; icon?: React.ReactNode; children: R
     </div>
 );
 
+
 const ChatSandbox: React.FC<{systemPrompt: string, aiModel: string}> = ({ systemPrompt, aiModel }) => {
     const [messages, setMessages] = useState<{sender: 'user'|'bot', text: string}[]>([
         { sender: 'bot', text: 'Olá! Como posso te ajudar a agendar seu horário hoje?' }
@@ -28,10 +31,12 @@ const ChatSandbox: React.FC<{systemPrompt: string, aiModel: string}> = ({ system
     const [isLoading, setIsLoading] = useState(false);
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
+
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
     }
     useEffect(scrollToBottom, [messages]);
+
 
     const handleSend = async () => {
         if (!input.trim() || isLoading) return;
@@ -41,6 +46,7 @@ const ChatSandbox: React.FC<{systemPrompt: string, aiModel: string}> = ({ system
         setMessages(newMessages);
         setInput('');
         setIsLoading(true);
+
 
         try {
             const response = await fetch('/api/chat', {
@@ -56,12 +62,15 @@ const ChatSandbox: React.FC<{systemPrompt: string, aiModel: string}> = ({ system
                 })
             });
 
+
             if (!response.ok) {
                 throw new Error(`API error: ${response.statusText}`);
             }
 
+
             const data = await response.json();
             setMessages([...newMessages, { sender: 'bot' as 'bot', text: data.reply }]);
+
 
         } catch (error) {
             console.error("Failed to get AI response:", error);
@@ -70,6 +79,7 @@ const ChatSandbox: React.FC<{systemPrompt: string, aiModel: string}> = ({ system
             setIsLoading(false);
         }
     };
+
 
     return (
         <div className="border rounded-lg flex flex-col h-96">
@@ -114,6 +124,7 @@ const ChatSandbox: React.FC<{systemPrompt: string, aiModel: string}> = ({ system
     )
 }
 
+
 const Settings: React.FC = () => {
     const [users, setUsers] = useState(initialUsers);
     const [aiModel, setAiModel] = useState('gemini-2.5-pro');
@@ -126,9 +137,11 @@ const Settings: React.FC = () => {
     const [apiKey, setApiKey] = useState('');
 
 
+
     const handleRoleChange = (userId: string, newRole: UserRole) => {
         setUsers(users.map(user => user.id === userId ? { ...user, role: newRole } : user));
     };
+
 
     const handleWhatsappConnect = () => {
         if (apiType === 'official') {
@@ -149,6 +162,7 @@ const Settings: React.FC = () => {
         setWhatsappStatus('connected');
     };
 
+
     const handleWhatsappDisconnect = () => {
         setWhatsappStatus('disconnected');
         setApiUrl('');
@@ -156,9 +170,11 @@ const Settings: React.FC = () => {
     };
 
 
+
     return (
         <div className="space-y-8">
             <h2 className="text-3xl font-bold text-gray-800">IA & Configurações</h2>
+
 
             <SettingsCard title="Integração com WhatsApp" icon={ICONS.whatsapp}>
                 <div>
@@ -168,6 +184,7 @@ const Settings: React.FC = () => {
                         <option value="evolution">Evolution API (Não Oficial)</option>
                     </select>
                 </div>
+
 
                 <div className="mt-4 border-t pt-4">
                     {apiType === 'evolution' && (
@@ -203,6 +220,7 @@ const Settings: React.FC = () => {
                 </div>
             </SettingsCard>
 
+
              <SettingsCard title="Configuração do Chatbot de IA" icon={ICONS.robot}>
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                     <div className="space-y-6">
@@ -236,72 +254,10 @@ const Settings: React.FC = () => {
                 </div>
             </SettingsCard>
 
+
             <SettingsCard title="Permissões de Usuário" icon={ICONS.users}>
                 <div className="overflow-x-auto">
                     <table className="min-w-full divide-y divide-gray-200">
                         <thead className="bg-gray-50">
                             <tr>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Usuário</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">E-mail</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Permissão</th>
-                            </tr>
-                        </thead>
-                        <tbody className="bg-white divide-y divide-gray-200">
-                            {users.map(user => (
-                                <tr key={user.id}>
-                                    <td className="px-6 py-4 whitespace-nowrap">
-                                        <div className="flex items-center">
-                                            <img className="h-10 w-10 rounded-full" src={user.avatarUrl} alt="" />
-                                            <div className="ml-4">
-                                                <div className="text-sm font-medium text-gray-900">{user.name}</div>
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{user.email}</td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                        <select 
-                                            value={user.role} 
-                                            onChange={(e) => handleRoleChange(user.id, e.target.value as UserRole)}
-                                            className="rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm"
-                                            disabled={user.role === UserRole.Administrador}
-                                        >
-                                            {Object.values(UserRole).filter(role => role !== UserRole.Cliente).map(role => (
-                                                <option key={role} value={role}>{role}</option>
-                                            ))}
-                                        </select>
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                </div>
-            </SettingsCard>
-
-            <Modal isOpen={isWhatsappModalOpen} onClose={() => setIsWhatsappModalOpen(false)} title="Conectar WhatsApp">
-                <div className="text-center">
-                    <p className="text-gray-600 mb-4">Escaneie o QR Code abaixo com o seu celular para conectar sua conta do WhatsApp.</p>
-                    <div className="bg-gray-100 p-4 rounded-lg inline-block">
-                        {/* Placeholder for QR Code */}
-                        <svg className="w-48 h-48 mx-auto" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path fillRule="evenodd" clipRule="evenodd" d="M0 0H70V70H0V0ZM10 10V60H60V10H10Z" fill="black"/>
-                            <path fillRule="evenodd" clipRule="evenodd" d="M25 25H45V45H25V25Z" fill="black"/>
-                            <path fillRule="evenodd" clipRule="evenodd" d="M130 0H200V70H130V0ZM140 10V60H190V10H140Z" fill="black"/>
-                            <path d="M155 25H175V45H155V25Z" fill="black"/>
-                            <path fillRule="evenodd" clipRule="evenodd" d="M0 130H70V200H0V130ZM10 140V190H60V140H10Z" fill="black"/>
-                            <path d="M25 155H45V175H25V155Z" fill="black"/>
-                            <path d="M95 10H105V20H95V10ZM115 10H125V20H115V10ZM95 30H105V40H95V30ZM115 30H125V40H115V30ZM95 50H105V60H95V50ZM115 50H125V60H115V50ZM95 70H105V80H95V70ZM115 70H125V80H115V70ZM95 90H105V100H95V90ZM115 90H125V100H115V90ZM95 110H105V120H95V110ZM115 110H125V120H115V110ZM95 130H105V140H95V130ZM115 130H125V140H115V130ZM95 150H105V160H95V150ZM115 150H125V160H115V150ZM95 170H105V180H95V170ZM115 170H125V180H115V170ZM95 190H105V200H95V190ZM115 190H125V200H115V190ZM10 95H20V105H10V95ZM30 95H40V105H30V95ZM50 95H60V105H50V95ZM70 95H80V105H70V95ZM130 95H140V105H130V95ZM150 95H160V105H150V95ZM170 95H180V105H170V95ZM190 95H200V105H190V95Z" fill="black"/>
-                        </svg>
-                    </div>
-                    <p className="text-xs text-gray-500 mt-4">1. Abra o WhatsApp no seu celular.<br/>2. Toque em Mais opções &gt; Aparelhos conectados.<br/>3. Toque em Conectar um aparelho.<br/>4. Aponte seu celular para esta tela.</p>
-                    <div className="mt-6">
-                        <button onClick={handleQrCodeConnect} className="bg-success text-white font-bold py-2 px-6 rounded-lg shadow-md hover:bg-green-600 transition-colors">
-                            Simular Conexão
-                        </button>
-                    </div>
-                </div>
-            </Modal>
-        </div>
-    );
-};
-
-export default Settings;
+                                <th className="px-6 py-3 text-left
