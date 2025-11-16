@@ -19,10 +19,16 @@ export default async function handler(request: Request) {
             return new Response(JSON.stringify({ error: 'API key not configured' }), { status: 500 });
         }
         
-        // Correctly import the module and access the 'GenerativeAI' class
-        const genAIModule = await import('@google/genai');
-        const GenerativeAI = genAIModule.GenerativeAI;
-        const genAIClient = new GenerativeAI(apiKey);
+        // Use a type assertion to work around a faulty type definition in this environment.
+        const genAIModule = await import('@google/genai') as any;
+        const GoogleGenerativeAI = genAIModule.GoogleGenerativeAI;
+
+        if (typeof GoogleGenerativeAI !== 'function') {
+            console.error("GoogleGenerativeAI class not found on the imported module.");
+            return new Response(JSON.stringify({ error: 'Failed to initialize AI client' }), { status: 500 });
+        }
+
+        const genAIClient = new GoogleGenerativeAI(apiKey);
 
         // Mapeamento do histórico para o formato da API
         const chatHistory: Content[] = history.map((msg: { sender: 'user' | 'bot'; text: string; }) => ({
@@ -48,8 +54,7 @@ export default async function handler(request: Request) {
             headers: { 'Content-Type': 'application/json' },
         });
 
-    } catch (error)
-     {
+    } catch (error) {
         console.error("Error in /api/chat:", error);
         const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
         return new Response(JSON.stringify({ error: 'Failed to process chat message', details: errorMessage }), { status: 500 });
