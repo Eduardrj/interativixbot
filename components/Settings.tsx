@@ -2,8 +2,6 @@ import React, { useState, useRef, useEffect } from 'react';
 import { User, UserRole } from '../types';
 import { ICONS } from '../constants';
 import Modal from './Modal';
-import { GoogleGenAI } from "@google/genai";
-
 
 const initialUsers: User[] = [
   { id: 'u1', name: 'Ana Silva', email: 'ana@example.com', role: UserRole.Atendente, avatarUrl: 'https://ui-avatars.com/api/?name=Ana+Silva&background=8B5CF6&color=fff' },
@@ -260,4 +258,65 @@ const Settings: React.FC = () => {
                     <table className="min-w-full divide-y divide-gray-200">
                         <thead className="bg-gray-50">
                             <tr>
-                                <th className="px-6 py-3 text-left
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Usuário</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Permissão</th>
+                                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody className="bg-white divide-y divide-gray-200">
+                            {users.map(user => (
+                                <tr key={user.id}>
+                                    <td className="px-6 py-4 whitespace-nowrap">
+                                        <div className="flex items-center">
+                                            <div className="flex-shrink-0 h-10 w-10">
+                                                <img className="h-10 w-10 rounded-full" src={user.avatarUrl} alt={user.name} />
+                                            </div>
+                                            <div className="ml-4">
+                                                <div className="text-sm font-medium text-gray-900">{user.name}</div>
+                                                <div className="text-sm text-gray-500">{user.email}</div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td className="px-6 py-4 whitespace-nowrap">
+                                        <select
+                                            value={user.role}
+                                            onChange={(e) => handleRoleChange(user.id, e.target.value as UserRole)}
+                                            className="rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm"
+                                            disabled={user.role === UserRole.Administrador}
+                                        >
+                                            {Object.values(UserRole).filter(role => role !== UserRole.Cliente).map(role => (
+                                                <option key={role} value={role}>{role}</option>
+                                            ))}
+                                        </select>
+                                    </td>
+                                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                        <button className="text-red-600 hover:text-red-900 disabled:text-gray-400" disabled={user.role === UserRole.Administrador}>
+                                            Remover
+                                        </button>
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
+            </SettingsCard>
+
+            <Modal isOpen={isWhatsappModalOpen} onClose={() => setIsWhatsappModalOpen(false)} title="Conectar WhatsApp">
+                <div className="text-center">
+                    <p className="text-gray-600 mb-4">Escaneie o QR Code com o seu celular para conectar sua conta do WhatsApp.</p>
+                    <div className="bg-gray-100 p-4 rounded-lg inline-block">
+                        {/* Placeholder for QR Code */}
+                        <img src="https://quickchart.io/qr?text=https://interativix.com/connect&size=200" alt="QR Code" />
+                    </div>
+                    <div className="mt-6">
+                        <button onClick={handleQrCodeConnect} className="w-full bg-success text-white font-bold py-2 px-4 rounded-lg shadow-md hover:bg-green-600 transition-colors">
+                            Já escaneei, conectar!
+                        </button>
+                    </div>
+                </div>
+            </Modal>
+        </div>
+    );
+};
+
+export default Settings;
