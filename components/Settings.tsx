@@ -4,9 +4,9 @@ import { ICONS } from '../constants';
 import Modal from './Modal';
 
 const initialUsers: User[] = [
-  { id: 'u1', name: 'Ana Silva', email: 'ana@example.com', role: UserRole.Atendente, avatarUrl: 'https://ui-avatars.com/api/?name=Ana+Silva&background=EC4899&color=fff' },
+  { id: 'u1', name: 'Ana Silva', email: 'ana@example.com', role: UserRole.Atendente, avatarUrl: 'https://ui-avatars.com/api/?name=Ana+Silva&background=8B5CF6&color=fff' },
   { id: 'u2', name: 'Bruno Costa', email: 'bruno@example.com', role: UserRole.Gerente, avatarUrl: 'https://ui-avatars.com/api/?name=Bruno+Costa&background=3B82F6&color=fff' },
-  { id: 'u3', name: 'Admin', email: 'admin@autoagende.com', role: UserRole.Administrador, avatarUrl: 'https://ui-avatars.com/api/?name=Admin&background=14B8A6&color=fff' },
+  { id: 'u3', name: 'Admin', email: 'admin@interativix.com', role: UserRole.Administrador, avatarUrl: 'https://ui-avatars.com/api/?name=Admin&background=F97316&color=fff' },
 ];
 
 const SettingsCard: React.FC<{title: string; icon?: React.ReactNode; children: React.ReactNode}> = ({title, icon, children}) => (
@@ -45,7 +45,7 @@ const ChatSandbox: React.FC = () => {
 
     return (
         <div className="border rounded-lg flex flex-col h-96">
-            <div className="flex-1 p-4 space-y-4 overflow-y-auto bg-base-200/50">
+            <div className="flex-1 p-4 space-y-4 overflow-y-auto bg-slate-100/50">
                 {messages.map((msg, i) => (
                     <div key={i} className={`flex items-end gap-2 ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
                        {msg.sender === 'bot' && <div className="w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center flex-shrink-0">{ICONS.robot}</div>}
@@ -65,7 +65,7 @@ const ChatSandbox: React.FC = () => {
                     placeholder="Digite sua mensagem..." 
                     className="w-full px-3 py-2 border-gray-300 rounded-lg focus:ring-primary focus:border-primary"
                 />
-                <button onClick={handleSend} className="ml-2 p-3 bg-primary text-white rounded-lg hover:bg-primary-focus">
+                <button onClick={handleSend} className="ml-2 p-3 bg-primary text-white rounded-lg hover:bg-primary-hover">
                     {ICONS.send}
                 </button>
             </div>
@@ -76,21 +76,42 @@ const ChatSandbox: React.FC = () => {
 const Settings: React.FC = () => {
     const [users, setUsers] = useState(initialUsers);
     const [aiModel, setAiModel] = useState('gemini-2.5-pro');
-    const [systemPrompt, setSystemPrompt] = useState("Você é um assistente de agendamento para a plataforma AutoAgende. Pergunte ao usuário qual serviço deseja, preferências de profissional, data e horário. Verifique disponibilidade, confirme dados do cliente e finalize o agendamento. Seja cordial e objetivo.");
+    const [systemPrompt, setSystemPrompt] = useState("Você é um assistente de agendamento para a plataforma Interativix bot. Pergunte ao usuário qual serviço deseja, preferências de profissional, data e horário. Verifique disponibilidade, confirme dados do cliente e finalize o agendamento. Seja cordial e objetivo.");
+    
     const [whatsappStatus, setWhatsappStatus] = useState<'connected' | 'disconnected'>('disconnected');
     const [isWhatsappModalOpen, setIsWhatsappModalOpen] = useState(false);
+    const [apiType, setApiType] = useState<'official' | 'evolution'>('official');
+    const [apiUrl, setApiUrl] = useState('');
+    const [apiKey, setApiKey] = useState('');
+
 
     const handleRoleChange = (userId: string, newRole: UserRole) => {
         setUsers(users.map(user => user.id === userId ? { ...user, role: newRole } : user));
     };
 
     const handleWhatsappConnect = () => {
+        if (apiType === 'official') {
+            setIsWhatsappModalOpen(true);
+        } else {
+            if (!apiUrl || !apiKey) {
+                alert('Por favor, preencha a URL da API e a API Key.');
+                return;
+            }
+            // Simulating connection for Evolution API
+            console.log('Conectando com Evolution API:', { apiUrl, apiKey });
+            setWhatsappStatus('connected');
+        }
+    };
+    
+    const handleQrCodeConnect = () => {
         setIsWhatsappModalOpen(false);
         setWhatsappStatus('connected');
     };
 
     const handleWhatsappDisconnect = () => {
         setWhatsappStatus('disconnected');
+        setApiUrl('');
+        setApiKey('');
     };
 
 
@@ -99,23 +120,45 @@ const Settings: React.FC = () => {
             <h2 className="text-3xl font-bold text-gray-800">IA & Configurações</h2>
 
             <SettingsCard title="Integração com WhatsApp" icon={ICONS.whatsapp}>
-                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between">
-                    <div>
-                        <div className="flex items-center gap-2">
-                            <span className={`h-3 w-3 rounded-full ${whatsappStatus === 'connected' ? 'bg-success animate-pulse' : 'bg-error'}`}></span>
-                            <p className="font-semibold text-gray-700">Status: <span className={whatsappStatus === 'connected' ? 'text-success' : 'text-error'}>{whatsappStatus === 'connected' ? 'Conectado' : 'Desconectado'}</span></p>
+                <div>
+                    <label className="block text-sm font-medium text-gray-700">Tipo de Conexão</label>
+                    <select value={apiType} onChange={e => setApiType(e.target.value as 'official' | 'evolution')} className="mt-1 block w-full sm:w-auto rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm">
+                        <option value="official">API Oficial (QR Code)</option>
+                        <option value="evolution">Evolution API (Não Oficial)</option>
+                    </select>
+                </div>
+
+                <div className="mt-4 border-t pt-4">
+                    {apiType === 'evolution' && (
+                        <div className="space-y-4 mb-4">
+                             <div>
+                                <label className="block text-sm font-medium text-gray-700">URL da API</label>
+                                <input type="text" value={apiUrl} onChange={(e) => setApiUrl(e.target.value)} placeholder="https://seudominio.com" className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm" />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700">API Key</label>
+                                <input type="password" value={apiKey} onChange={(e) => setApiKey(e.target.value)} placeholder="Sua chave de API segura" className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm" />
+                            </div>
                         </div>
-                        <p className="text-sm text-gray-500 mt-1">Conecte seu número para permitir que a IA agende horários automaticamente.</p>
-                    </div>
-                    {whatsappStatus === 'disconnected' ? (
-                        <button onClick={() => setIsWhatsappModalOpen(true)} className="mt-4 sm:mt-0 bg-primary text-white font-bold py-2 px-4 rounded-lg shadow-md hover:bg-primary-focus transition-colors">
-                            Conectar WhatsApp
-                        </button>
-                    ) : (
-                         <button onClick={handleWhatsappDisconnect} className="mt-4 sm:mt-0 bg-error text-white font-bold py-2 px-4 rounded-lg shadow-md hover:bg-red-600 transition-colors">
-                            Desconectar
-                        </button>
                     )}
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between">
+                        <div>
+                            <div className="flex items-center gap-2">
+                                <span className={`h-3 w-3 rounded-full ${whatsappStatus === 'connected' ? 'bg-success animate-pulse' : 'bg-danger'}`}></span>
+                                <p className="font-semibold text-gray-700">Status: <span className={whatsappStatus === 'connected' ? 'text-success' : 'text-danger'}>{whatsappStatus === 'connected' ? 'Conectado' : 'Desconectado'}</span></p>
+                            </div>
+                            <p className="text-sm text-gray-500 mt-1">Conecte seu número para permitir que a IA agende horários automaticamente.</p>
+                        </div>
+                        {whatsappStatus === 'disconnected' ? (
+                            <button onClick={handleWhatsappConnect} className="mt-4 sm:mt-0 bg-primary text-white font-bold py-2 px-4 rounded-lg shadow-md hover:bg-primary-hover transition-colors">
+                                Conectar WhatsApp
+                            </button>
+                        ) : (
+                             <button onClick={handleWhatsappDisconnect} className="mt-4 sm:mt-0 bg-danger text-white font-bold py-2 px-4 rounded-lg shadow-md hover:bg-red-600 transition-colors">
+                                Desconectar
+                            </button>
+                        )}
+                    </div>
                 </div>
             </SettingsCard>
 
@@ -124,9 +167,9 @@ const Settings: React.FC = () => {
                     <div className="space-y-6">
                          <div>
                             <label className="block text-sm font-medium text-gray-700">Modelo de IA</label>
-                            <select value={aiModel} onChange={e => setAiModel(e.target.value)} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm">
+                             <select value={aiModel} onChange={e => setAiModel(e.target.value)} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm">
+                                <option value="gemini-2.5-flash">Google Gemini 2.5 Flash</option>
                                 <option value="gemini-2.5-pro">Google Gemini 2.5 Pro</option>
-                                <option value="gpt-4-turbo">OpenAI GPT-4 Turbo</option>
                             </select>
                         </div>
                         <div>
@@ -137,29 +180,29 @@ const Settings: React.FC = () => {
                                 value={systemPrompt}
                                 onChange={(e) => setSystemPrompt(e.target.value)}
                                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm"
-                            ></textarea>
-                            <p className="mt-1 text-xs text-gray-500">Este é o prompt principal que define o comportamento do seu assistente de IA.</p>
+                                placeholder="Descreva o comportamento do seu assistente de IA aqui..."
+                             ></textarea>
+                             <p className="mt-2 text-xs text-gray-500">Dica: Dê personalidade ao seu bot. Defina como ele deve saudar, se ele deve ser formal ou informal, etc.</p>
                         </div>
-                         <div className="flex justify-end pt-2">
-                            <button className="bg-primary text-white font-bold py-2 px-4 rounded-lg shadow-md hover:bg-primary-focus transition-colors">
-                                Salvar Configurações de IA
-                            </button>
-                        </div>
+                         <button className="w-full bg-primary text-white font-bold py-2 px-4 rounded-lg shadow-md hover:bg-primary-hover transition-colors">
+                            Salvar Configurações de IA
+                        </button>
                     </div>
                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Teste do Chatbot (Sandbox)</label>
+                        <p className="block text-sm font-medium text-gray-700 mb-2">Sandbox de Teste</p>
                         <ChatSandbox />
-                     </div>
+                    </div>
                 </div>
             </SettingsCard>
-            
+
             <SettingsCard title="Permissões de Usuário" icon={ICONS.users}>
                 <div className="overflow-x-auto">
                     <table className="min-w-full divide-y divide-gray-200">
                         <thead className="bg-gray-50">
                             <tr>
-                                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nome</th>
-                                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Permissão</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Usuário</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">E-mail</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Permissão</th>
                             </tr>
                         </thead>
                         <tbody className="bg-white divide-y divide-gray-200">
@@ -167,22 +210,21 @@ const Settings: React.FC = () => {
                                 <tr key={user.id}>
                                     <td className="px-6 py-4 whitespace-nowrap">
                                         <div className="flex items-center">
-                                            <div className="flex-shrink-0 h-10 w-10">
-                                                <img className="h-10 w-10 rounded-full" src={user.avatarUrl} alt="" />
-                                            </div>
+                                            <img className="h-10 w-10 rounded-full" src={user.avatarUrl} alt="" />
                                             <div className="ml-4">
                                                 <div className="text-sm font-medium text-gray-900">{user.name}</div>
-                                                <div className="text-sm text-gray-500">{user.email}</div>
                                             </div>
                                         </div>
                                     </td>
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{user.email}</td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                        <select
-                                            value={user.role}
+                                        <select 
+                                            value={user.role} 
                                             onChange={(e) => handleRoleChange(user.id, e.target.value as UserRole)}
-                                            className="p-2 border-gray-300 rounded-md shadow-sm focus:border-primary focus:ring-primary sm:text-sm"
+                                            className="rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm"
+                                            disabled={user.role === UserRole.Administrador}
                                         >
-                                            {Object.values(UserRole).filter(r => r !== 'Cliente').map(role => (
+                                            {Object.values(UserRole).filter(role => role !== UserRole.Cliente).map(role => (
                                                 <option key={role} value={role}>{role}</option>
                                             ))}
                                         </select>
@@ -194,25 +236,27 @@ const Settings: React.FC = () => {
                 </div>
             </SettingsCard>
 
-            <Modal isOpen={isWhatsappModalOpen} onClose={() => setIsWhatsappModalOpen(false)} title="Conectar ao WhatsApp">
+            <Modal isOpen={isWhatsappModalOpen} onClose={() => setIsWhatsappModalOpen(false)} title="Conectar WhatsApp">
                 <div className="text-center">
-                    <p className="text-gray-600 mb-4">Escaneie o QR Code com o seu celular para conectar sua conta do WhatsApp.</p>
-                    <img 
-                        src="https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=AutoAgendeIntegrationLink" 
-                        alt="QR Code para conectar WhatsApp"
-                        className="mx-auto border-4 border-gray-200 rounded-lg"
-                    />
-                    <div className="text-left mt-6 space-y-2 text-sm text-gray-500">
-                        <p>1. Abra o WhatsApp no seu celular.</p>
-                        <p>2. Toque em <strong>Menu</strong> (&#8942;) ou <strong>Configurações</strong> e selecione <strong>Aparelhos conectados</strong>.</p>
-                        <p>3. Toque em <strong>Conectar um aparelho</strong>.</p>
-                        <p>4. Aponte seu celular para esta tela para capturar o código.</p>
+                    <p className="text-gray-600 mb-4">Escaneie o QR Code abaixo com o seu celular para conectar sua conta do WhatsApp.</p>
+                    <div className="bg-gray-100 p-4 rounded-lg inline-block">
+                        {/* Placeholder for QR Code */}
+                        <svg className="w-48 h-48 mx-auto" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path fillRule="evenodd" clipRule="evenodd" d="M0 0H70V70H0V0ZM10 10V60H60V10H10Z" fill="black"/>
+                            <path fillRule="evenodd" clipRule="evenodd" d="M25 25H45V45H25V25Z" fill="black"/>
+                            <path fillRule="evenodd" clipRule="evenodd" d="M130 0H200V70H130V0ZM140 10V60H190V10H140Z" fill="black"/>
+                            <path d="M155 25H175V45H155V25Z" fill="black"/>
+                            <path fillRule="evenodd" clipRule="evenodd" d="M0 130H70V200H0V130ZM10 140V190H60V140H10Z" fill="black"/>
+                            <path d="M25 155H45V175H25V155Z" fill="black"/>
+                            <path d="M95 10H105V20H95V10ZM115 10H125V20H115V10ZM95 30H105V40H95V30ZM115 30H125V40H115V30ZM95 50H105V60H95V50ZM115 50H125V60H115V50ZM95 70H105V80H95V70ZM115 70H125V80H115V70ZM95 90H105V100H95V90ZM115 90H125V100H115V90ZM95 110H105V120H95V110ZM115 110H125V120H115V110ZM95 130H105V140H95V130ZM115 130H125V140H115V130ZM95 150H105V160H95V150ZM115 150H125V160H115V150ZM95 170H105V180H95V170ZM115 170H125V180H115V170ZM95 190H105V200H95V190ZM115 190H125V200H115V190ZM10 95H20V105H10V95ZM30 95H40V105H30V95ZM50 95H60V105H50V95ZM70 95H80V105H70V95ZM130 95H140V105H130V95ZM150 95H160V105H150V95ZM170 95H180V105H170V95ZM190 95H200V105H190V95Z" fill="black"/>
+                        </svg>
                     </div>
-                     <div className="mt-6">
-                        <button onClick={handleWhatsappConnect} className="bg-primary text-white font-bold py-2 px-6 rounded-lg shadow-md hover:bg-primary-focus transition-colors w-full sm:w-auto">
-                            Já escaneei, conectar!
+                    <p className="text-xs text-gray-500 mt-4">1. Abra o WhatsApp no seu celular.<br/>2. Toque em Mais opções > Aparelhos conectados.<br/>3. Toque em Conectar um aparelho.<br/>4. Aponte seu celular para esta tela.</p>
+                    <div className="mt-6">
+                        <button onClick={handleQrCodeConnect} className="bg-success text-white font-bold py-2 px-6 rounded-lg shadow-md hover:bg-green-600 transition-colors">
+                            Simular Conexão
                         </button>
-                     </div>
+                    </div>
                 </div>
             </Modal>
         </div>

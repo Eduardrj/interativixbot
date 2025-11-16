@@ -1,3 +1,4 @@
+
 import React from 'react';
 
 const ManualSection: React.FC<{title: string; children: React.ReactNode}> = ({title, children}) => (

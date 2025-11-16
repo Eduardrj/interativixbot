@@ -18,7 +18,7 @@ const Clients: React.FC = () => {
         <div className="space-y-6">
             <div className="flex justify-between items-center">
                 <h2 className="text-3xl font-bold text-gray-800">Clientes</h2>
-                <button onClick={() => setIsModalOpen(true)} className="flex items-center bg-primary text-white font-bold py-2 px-4 rounded-lg shadow-md hover:bg-primary-focus transition-colors">
+                <button onClick={() => setIsModalOpen(true)} className="flex items-center bg-primary text-white font-bold py-2 px-4 rounded-lg shadow-md hover:bg-primary-hover transition-colors">
                     {ICONS.plus}
                     <span className="ml-2">Adicionar Cliente</span>
                 </button>
@@ -43,7 +43,7 @@ const Clients: React.FC = () => {
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{client.lastAppointment?.toLocaleDateString()}</td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                    <a href="#" className="text-primary hover:text-primary-focus">Ver Histórico</a>
+                                    <a href="#" className="text-primary hover:text-primary-hover">Ver Histórico</a>
                                 </td>
                             </tr>
                         ))}

@@ -21,7 +21,7 @@ export interface Service {
 }
 
 export interface User {
-  id: string;
+  id:string;
   name: string;
   email: string;
   role: UserRole;
@@ -60,6 +60,7 @@ export interface Plan {
     frequency: string;
     features: string[];
     isPopular: boolean;
+    description?: string;
 }
 
 export type Page = 

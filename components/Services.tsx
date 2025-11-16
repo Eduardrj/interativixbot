@@ -28,7 +28,7 @@ const ServiceForm: React.FC<{onSave: (service: Omit<Service, 'id'>) => void, ser
             <input type="number" placeholder="Duração (minutos)" value={duration} onChange={e => setDuration(parseInt(e.target.value, 10))} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary" required />
             <input type="number" placeholder="Preço (R$)" value={price} onChange={e => setPrice(parseFloat(e.target.value))} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary" required />
             <div className="flex justify-end pt-4">
-                <button type="submit" className="bg-primary text-white font-bold py-2 px-4 rounded-lg shadow-md hover:bg-primary-focus transition-colors">
+                <button type="submit" className="bg-primary text-white font-bold py-2 px-4 rounded-lg shadow-md hover:bg-primary-hover transition-colors">
                     Salvar Serviço
                 </button>
             </div>
@@ -53,20 +53,19 @@ const Services: React.FC = () => {
         <div className="space-y-6">
             <div className="flex justify-between items-center">
                 <h2 className="text-3xl font-bold text-gray-800">Serviços</h2>
-                <button onClick={() => setIsModalOpen(true)} className="flex items-center bg-primary text-white font-bold py-2 px-4 rounded-lg shadow-md hover:bg-primary-focus transition-colors">
+                <button onClick={() => setIsModalOpen(true)} className="flex items-center bg-primary text-white font-bold py-2 px-4 rounded-lg shadow-md hover:bg-primary-hover transition-colors">
                     {ICONS.plus}
                     <span className="ml-2">Adicionar Serviço</span>
                 </button>
             </div>
-            
-            <div className="bg-white p-6 rounded-2xl shadow-md overflow-x-auto">
+             <div className="bg-white p-6 rounded-2xl shadow-md overflow-x-auto">
                  <table className="min-w-full divide-y divide-gray-200">
                     <thead className="bg-gray-50">
                         <tr>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Nome</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Serviço</th>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Duração</th>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Preço</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Ações</th>
+                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Ações</th>
                         </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
@@ -76,15 +75,14 @@ const Services: React.FC = () => {
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{service.duration} min</td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">R$ {service.price.toFixed(2)}</td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                    <a href="#" className="text-primary hover:text-primary-focus">Editar</a>
+                                    <a href="#" className="text-primary hover:text-primary-hover">Editar</a>
                                 </td>
                             </tr>
                         ))}
                     </tbody>
                 </table>
             </div>
-
-            <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title="Adicionar Novo Serviço">
+             <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title="Adicionar Novo Serviço">
                 <ServiceForm onSave={handleSaveService} />
             </Modal>
         </div>

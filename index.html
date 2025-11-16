@@ -1,46 +1,59 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="pt-br" class="scroll-smooth">
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>AutoAgende</title>
+    <title>Interativix bot</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
       tailwind.config = {
         theme: {
           extend: {
             colors: {
-              primary: '#14B8A6', // Teal-500
-              'primary-focus': '#0D9488', // Teal-600
-              'primary-content': '#ffffff',
-              secondary: '#64748B', // Slate-500
-              accent: '#EC4899', // Pink-500
-              neutral: '#374151', // Gray-700
-              'base-100': '#F9FAFB', // Gray-50
-              'base-200': '#F3F4F6', // Gray-100
-              'base-300': '#E5E7EB', // Gray-200
-              info: '#3B82F6', // Blue-500
-              success: '#10B981', // Emerald-500
-              warning: '#F59E0B', // Amber-500
-              error: '#EF4444', // Red-500
+              primary: {
+                DEFAULT: '#3B82F6',
+                hover: '#2563EB',
+                light: '#EFF6FF',
+              },
+              secondary: '#6B7280',
+              success: '#10B981',
+              danger: '#EF4444',
+              warning: '#F59E0B',
+              info: '#3B82F6',
+              violet: {
+                DEFAULT: '#8B5CF6',
+                hover: '#7C3AED',
+              },
+              accent: {
+                DEFAULT: '#8B5CF6',
+                hover: '#7C3AED',
+              },
+              orange: {
+                DEFAULT: '#F97316',
+                hover: '#EA580C',
+              }
             },
-          }
-        }
+             animation: {
+              'spin-slow': 'spin 3s linear infinite',
+              'bounce-slow': 'bounce 1.5s infinite',
+            },
+          },
+        },
       }
     </script>
-  <script type="importmap">
-{
-  "imports": {
-    "react/": "https://aistudiocdn.com/react@^19.2.0/",
-    "react": "https://aistudiocdn.com/react@^19.2.0",
-    "recharts": "https://aistudiocdn.com/recharts@^3.4.1",
-    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/"
-  }
-}
-</script>
-</head>
-  <body>
+    <script type="importmap">
+    {
+      "imports": {
+        "react/": "https://aistudiocdn.com/react@^19.2.0/",
+        "react": "https://aistudiocdn.com/react@^19.2.0",
+        "recharts": "https://aistudiocdn.com/recharts@^3.4.1",
+        "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/"
+      }
+    }
+    </script>
+  </head>
+  <body class="bg-slate-50">
     <div id="root"></div>
     <script type="module" src="/index.tsx"></script>
   </body>

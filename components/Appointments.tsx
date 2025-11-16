@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import KanbanBoard from './KanbanBoard';
 import Modal from './Modal';
@@ -13,7 +12,7 @@ const mockServices: Service[] = [
 ];
 
 const mockAttendants: User[] = [
-  { id: 'u1', name: 'Ana Silva', email: 'ana@example.com', role: UserRole.Atendente, avatarUrl: 'https://ui-avatars.com/api/?name=Ana+Silva&background=EC4899&color=fff' },
+  { id: 'u1', name: 'Ana Silva', email: 'ana@example.com', role: UserRole.Atendente, avatarUrl: 'https://ui-avatars.com/api/?name=Ana+Silva&background=8B5CF6&color=fff' },
   { id: 'u2', name: 'Bruno Costa', email: 'bruno@example.com', role: UserRole.Atendente, avatarUrl: 'https://ui-avatars.com/api/?name=Bruno+Costa&background=3B82F6&color=fff' },
 ];
 
@@ -34,20 +33,20 @@ const CalendarView: React.FC<{appointments: Appointment[]}> = ({appointments}) =
     });
 
     return (
-        <div className="bg-white p-4 rounded-2xl shadow-md">
-            <div className="grid grid-cols-7 gap-2 text-center font-bold text-gray-600">
-                {days.map((day, i) => <div key={day} className={`${weekDates[i].toDateString() === today.toDateString() ? 'text-primary' : ''}`}>{day} <span className="text-sm font-normal">{weekDates[i].getDate()}</span></div>)}
+        <div className="bg-white p-2 sm:p-4 rounded-2xl shadow-md">
+            <div className="grid grid-cols-7 gap-1 sm:gap-2 text-center font-bold text-gray-600 text-xs sm:text-base">
+                {days.map((day, i) => <div key={day} className={`${weekDates[i].toDateString() === today.toDateString() ? 'text-primary' : ''}`}>{day} <span className="block sm:inline text-sm font-normal">{weekDates[i].getDate()}</span></div>)}
             </div>
-            <div className="grid grid-cols-7 gap-2 mt-2 h-[60vh] overflow-y-auto">
+            <div className="grid grid-cols-7 gap-1 sm:gap-2 mt-2 h-[60vh] overflow-y-auto">
                 {weekDates.map(date => (
-                    <div key={date.toISOString()} className={`border-t-2 p-2 ${date.toDateString() === today.toDateString() ? 'border-primary' : 'border-gray-200'}`}>
+                    <div key={date.toISOString()} className={`border-t-2 p-1 sm:p-2 ${date.toDateString() === today.toDateString() ? 'border-primary' : 'border-gray-200'}`}>
                         {appointments
                             .filter(app => app.startTime.toDateString() === date.toDateString())
                             .sort((a,b) => a.startTime.getTime() - b.startTime.getTime())
                             .map(app => (
-                                <div key={app.id} className="text-xs bg-primary/10 text-primary-focus p-2 rounded-lg mb-2">
-                                    <p className="font-bold">{app.service.name}</p>
-                                    <p>{app.clientName}</p>
+                                <div key={app.id} className="text-xs bg-primary-light text-primary p-1 sm:p-2 rounded-lg mb-2">
+                                    <p className="font-bold hidden sm:block">{app.service.name}</p>
+                                    <p>{app.clientName.split(' ')[0]}</p>
                                     <p>{app.startTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
                                 </div>
                             ))
@@ -94,17 +93,17 @@ const Appointments: React.FC = () => {
     <div className="space-y-6">
       <div className="flex justify-between items-center flex-wrap gap-4">
         <h2 className="text-3xl font-bold text-gray-800">Agendamentos</h2>
-        <div className="flex items-center gap-4">
-            <div className="p-1 bg-base-200 rounded-lg">
-                <button onClick={() => setViewMode('kanban')} className={`px-3 py-1 text-sm font-semibold rounded-md ${viewMode === 'kanban' ? 'bg-white shadow' : 'text-gray-600'}`}>Kanban</button>
-                <button onClick={() => setViewMode('calendar')} className={`px-3 py-1 text-sm font-semibold rounded-md ${viewMode === 'calendar' ? 'bg-white shadow' : 'text-gray-600'}`}>Calendário</button>
+        <div className="flex items-center gap-2 sm:gap-4">
+            <div className="p-1 bg-slate-200 rounded-lg">
+                <button onClick={() => setViewMode('kanban')} className={`px-2 py-1 sm:px-3 text-sm font-semibold rounded-md ${viewMode === 'kanban' ? 'bg-white shadow' : 'text-gray-600'}`}>Kanban</button>
+                <button onClick={() => setViewMode('calendar')} className={`px-2 py-1 sm:px-3 text-sm font-semibold rounded-md ${viewMode === 'calendar' ? 'bg-white shadow' : 'text-gray-600'}`}>Calendário</button>
             </div>
             <button
               onClick={() => setIsModalOpen(true)}
-              className="flex items-center bg-primary text-white font-bold py-2 px-4 rounded-lg shadow-md hover:bg-primary-focus transition-colors"
+              className="flex items-center bg-primary text-white font-bold py-2 px-3 sm:px-4 rounded-lg shadow-md hover:bg-primary-hover transition-colors"
             >
               {ICONS.plus}
-              <span className="ml-2">Novo Agendamento</span>
+              <span className="ml-2 hidden sm:inline">Novo Agendamento</span>
             </button>
         </div>
       </div>
@@ -185,7 +184,7 @@ const AppointmentForm: React.FC<{onSave: (data: any) => void, services: Service[
                 </div>
             </div>
             <div className="flex justify-end pt-4">
-                <button type="submit" className="bg-primary text-white font-bold py-2 px-4 rounded-lg shadow-md hover:bg-primary-focus transition-colors">
+                <button type="submit" className="bg-primary text-white font-bold py-2 px-4 rounded-lg shadow-md hover:bg-primary-hover transition-colors">
                     Salvar Agendamento
                 </button>
             </div>

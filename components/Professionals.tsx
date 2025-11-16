@@ -1,11 +1,10 @@
-
 import React, { useState } from 'react';
 import Modal from './Modal';
 import { Professional, UserRole } from '../types';
 import { ICONS } from '../constants';
 
 const mockProfessionals: Professional[] = [
-  { id: 'u1', name: 'Ana Silva', email: 'ana@example.com', role: UserRole.Atendente, avatarUrl: 'https://ui-avatars.com/api/?name=Ana+Silva&background=EC4899&color=fff&size=256', specialties: ['Corte', 'Coloração'] },
+  { id: 'u1', name: 'Ana Silva', email: 'ana@example.com', role: UserRole.Atendente, avatarUrl: 'https://ui-avatars.com/api/?name=Ana+Silva&background=8B5CF6&color=fff&size=256', specialties: ['Corte', 'Coloração'] },
   { id: 'u2', name: 'Bruno Costa', email: 'bruno@example.com', role: UserRole.Atendente, avatarUrl: 'https://ui-avatars.com/api/?name=Bruno+Costa&background=3B82F6&color=fff&size=256', specialties: ['Manicure', 'Pedicure'] },
   { id: 'u4', name: 'Carla Dias', email: 'carla@example.com', role: UserRole.Atendente, avatarUrl: 'https://ui-avatars.com/api/?name=Carla+Dias&background=F59E0B&color=fff&size=256', specialties: ['Estética Facial', 'Maquiagem'] },
   { id: 'u5', name: 'Daniel Alves', email: 'daniel@example.com', role: UserRole.Atendente, avatarUrl: 'https://ui-avatars.com/api/?name=Daniel+Alves&background=64748B&color=fff&size=256', specialties: ['Massagem', 'Terapias Corporais'] },
@@ -19,12 +18,12 @@ const ProfessionalCard: React.FC<{professional: Professional}> = ({professional}
             <p className="text-sm text-gray-500">{professional.email}</p>
             <div className="mt-2 flex flex-wrap justify-center gap-2">
                 {professional.specialties.map(spec => (
-                    <span key={spec} className="px-2 py-1 bg-primary/10 text-primary text-xs font-semibold rounded-full">{spec}</span>
+                    <span key={spec} className="px-2 py-1 bg-primary-light text-primary text-xs font-semibold rounded-full">{spec}</span>
                 ))}
             </div>
         </div>
         <div className="p-4 border-t">
-            <button className="text-sm text-primary hover:text-primary-focus font-semibold">Ver Agenda</button>
+            <button className="text-sm text-primary hover:text-primary-hover font-semibold">Ver Agenda</button>
         </div>
     </div>
 );
@@ -38,7 +37,7 @@ const Professionals: React.FC = () => {
         <div className="space-y-6">
             <div className="flex justify-between items-center">
                 <h2 className="text-3xl font-bold text-gray-800">Profissionais</h2>
-                <button onClick={() => setIsModalOpen(true)} className="flex items-center bg-primary text-white font-bold py-2 px-4 rounded-lg shadow-md hover:bg-primary-focus transition-colors">
+                <button onClick={() => setIsModalOpen(true)} className="flex items-center bg-primary text-white font-bold py-2 px-4 rounded-lg shadow-md hover:bg-primary-hover transition-colors">
                     {ICONS.plus}
                     <span className="ml-2">Adicionar Profissional</span>
                 </button>

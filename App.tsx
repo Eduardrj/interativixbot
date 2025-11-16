@@ -42,11 +42,11 @@ const App: React.FC = () => {
   }
 
   return (
-    <div className="flex h-screen bg-base-200 text-gray-800">
+    <div className="flex min-h-screen bg-slate-50 text-gray-800">
       <Sidebar currentPage={currentPage} setCurrentPage={setCurrentPage} isOpen={isSidebarOpen} setOpen={setSidebarOpen} />
       <div className="flex-1 flex flex-col overflow-hidden">
         <Header toggleSidebar={() => setSidebarOpen(!isSidebarOpen)} />
-        <main className="flex-1 overflow-x-hidden overflow-y-auto bg-base-100 p-4 sm:p-6 lg:p-8">
+        <main className="flex-1 overflow-x-hidden overflow-y-auto bg-slate-100 p-4 sm:p-6 lg:p-8">
           {renderPage()}
         </main>
       </div>
