@@ -20,7 +20,7 @@ const Faq: React.FC = () => {
         <div className="space-y-8 max-w-4xl mx-auto">
             <div>
                 <h2 className="text-3xl font-bold text-gray-800">Perguntas Frequentes (FAQ)</h2>
-                <p className="text-gray-500 mt-1">Encontre respostas para as dúvidas mais comuns sobre o Interativix bot.</p>
+                <p className="text-gray-500 mt-1">Encontre respostas para as dúvidas mais comuns sobre o Interativix-bot.</p>
             </div>
             
             <div className="bg-white p-8 rounded-2xl shadow-md space-y-6">
@@ -42,10 +42,10 @@ const Faq: React.FC = () => {
                     <p>Vá para a seção "Serviços" no menu lateral. Lá, você pode adicionar novos serviços, definir nome, duração e preço. Essas informações serão usadas tanto pela IA quanto pelos agendamentos manuais para calcular a disponibilidade da sua agenda.</p>
                 </FaqItem>
                  <FaqItem question="Existe uma opção gratuita?">
-                    <p>Sim! Oferecemos o <strong>Plano Grátis</strong> que permite que você utilize as funcionalidades essenciais da agenda para sempre, com algumas limitações. É a maneira perfeita de começar e entender como o Interativix bot pode ajudar seu negócio, sem nenhum custo inicial.</p>
+                    <p>Sim! Oferecemos o <strong>Plano Grátis</strong> que permite que você utilize as funcionalidades essenciais da agenda para sempre, com algumas limitações. É a maneira perfeita de começar e entender como o Interativix-bot pode ajudar seu negócio, sem nenhum custo inicial.</p>
                 </FaqItem>
                 <FaqItem question="O que são os diferentes níveis de permissão de usuário?">
-                    <p>Para garantir a segurança e a organização, o Interativix bot possui três níveis de acesso:</p>
+                    <p>Para garantir a segurança e a organização, o Interativix-bot possui três níveis de acesso:</p>
                     <ul className="list-disc pl-5 mt-2 space-y-1">
                         <li><strong>Administrador:</strong> Acesso total a todas as configurações, incluindo IA, planos e permissões de outros usuários.</li>
                         <li><strong>Gerente:</strong> Pode gerenciar agendamentos, clientes e profissionais, mas não tem acesso às configurações críticas do sistema.</li>

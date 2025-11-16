@@ -78,7 +78,7 @@ const Sidebar: React.FC<SidebarProps> = ({ currentPage, setCurrentPage, isOpen, 
       >
         <a href="#" className="flex items-center text-xl font-bold text-primary">
           <span className="w-8 h-8 mr-2">{ICONS.robot}</span>
-            Interativix bot
+            Interativix-bot
         </a>
 
         <div className="flex flex-col justify-between flex-1 mt-6">

@@ -66,7 +66,7 @@ const ManualAdmin: React.FC = () => {
             </ManualSection>
 
              <ManualSection title="4. Planos, Cobrança e Cupons">
-                <p>Na seção <strong>Planos & Cobrança</strong>, você gerencia a parte financeira da sua assinatura do Interativix bot.</p>
+                <p>Na seção <strong>Planos & Cobrança</strong>, você gerencia a parte financeira da sua assinatura do Interativix-bot.</p>
                  <ul className="list-disc pl-6 space-y-2 mt-2">
                     <li><strong>Planos:</strong> Visualize os detalhes do seu plano atual, compare com as outras opções disponíveis e realize upgrades para acessar mais funcionalidades, como aumento no número de profissionais e limites de automação.</li>
                     <li><strong>Cupons de Desconto:</strong> Crie cupons para campanhas de marketing. Por exemplo, um cupom "PRIMEIROMES" pode oferecer um desconto para novos clientes que contratarem o serviço através de um anúncio.</li>
