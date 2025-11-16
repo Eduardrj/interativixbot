@@ -226,31 +226,16 @@ const LandingPage: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
                         Com certeza! No painel de configurações, você pode ajustar o "prompt de sistema" da IA para que ela se comunique com a voz e o tom da sua marca.
                     </FaqItem>
                      <FaqItem question="Existe um período de teste gratuito?">
-                        Sim! Oferecemos o Plano Grátis que permite que você utilize as funcionalidades essenciais da agenda para sempre, com algumas limitações. É a maneira perfeita de começar e entender como o Interativix-bot pode ajudar seu negócio, sem nenhum custo inicial.
+                        Sim! Oferecemos o Plano Grátis que permite que você utilize as funcionalidades essenciais da agenda para sempre, com algumas limitações. É a maneira perfeita de começar e entender como o Interativix-bot pode ajudar seu negócio.
                     </FaqItem>
                 </div>
             </div>
         </section>
-        
-        {/* Final CTA Section */}
-        <section className="py-20 text-center">
-             <div className="container mx-auto px-6">
-                <h2 className="text-3xl sm:text-4xl font-extrabold text-gray-900">
-                    Pronto para revolucionar seu atendimento?
-                </h2>
-                <p className="mt-4 text-lg text-gray-600 max-w-2xl mx-auto">
-                    Junte-se a centenas de negócios que já estão economizando tempo e aumentando a satisfação de seus clientes.
-                </p>
-                <a href="#pricing" className="mt-8 inline-block bg-accent text-white font-bold text-lg py-4 px-10 rounded-lg shadow-lg hover:bg-accent-hover transition-transform transform hover:scale-105">
-                    Quero Automatizar Meus Agendamentos
-                </a>
-          </div>
-        </section>
       </main>
-      
-      <footer className="bg-gray-800 text-white">
-        <div className="container mx-auto px-6 py-8 text-center">
-            <p>&copy; {new Date().getFullYear()} Interativix-bot. Todos os direitos reservados.</p>
+
+      <footer className="bg-gray-800 text-white py-12">
+        <div className="container mx-auto px-6 text-center">
+            <p>&copy; 2024 Interativix-bot. Todos os direitos reservados.</p>
         </div>
       </footer>
     </div>

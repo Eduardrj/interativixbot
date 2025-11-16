@@ -1,5 +1,5 @@
 {
   "name": "Interativix-bot",
-  "description": "Automatize agendamentos com um bot interativo, integração via WhatsApp e um painel administrativo completo para clínicas, salões e prestadores de serviço.",
+  "description": "Interativix-bot: Automatize agendamentos com um bot interativo, integração via WhatsApp e um painel administrativo completo para clínicas, salões e prestadores de serviço.",
   "requestFramePermissions": []
 }
