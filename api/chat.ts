@@ -19,10 +19,10 @@ export default async function handler(request: Request) {
             return new Response(JSON.stringify({ error: 'API key not configured' }), { status: 500 });
         }
         
-        // @ts-ignore - This environment has a module resolution issue with this package.
-        // This directive bypasses the incorrect compile-time error.
-        const { GoogleGenerativeAI } = await import('@google/genai');
-        const genAI = new GoogleGenerativeAI(apiKey);
+        // Correctly import the module and access the 'GenerativeAI' class
+        const genAIModule = await import('@google/genai');
+        const GenerativeAI = genAIModule.GenerativeAI;
+        const genAIClient = new GenerativeAI(apiKey);
 
         // Mapeamento do histórico para o formato da API
         const chatHistory: Content[] = history.map((msg: { sender: 'user' | 'bot'; text: string; }) => ({
@@ -30,7 +30,7 @@ export default async function handler(request: Request) {
             parts: [{ text: msg.text }],
         }));
 
-        const modelInstance = genAI.getGenerativeModel({ 
+        const modelInstance = genAIClient.getGenerativeModel({ 
             model: model || 'gemini-1.5-flash',
             systemInstruction: systemInstruction || 'Você é um assistente prestativo.'
         });
@@ -48,7 +48,8 @@ export default async function handler(request: Request) {
             headers: { 'Content-Type': 'application/json' },
         });
 
-    } catch (error) {
+    } catch (error)
+     {
         console.error("Error in /api/chat:", error);
         const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
         return new Response(JSON.stringify({ error: 'Failed to process chat message', details: errorMessage }), { status: 500 });
