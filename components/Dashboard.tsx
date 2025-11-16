@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, LineChart, Line } from 'recharts';
 import { ICONS } from '../constants';
@@ -17,7 +16,7 @@ const StatCard: React.FC<{ title: string; value: string; icon: React.ReactNode; 
         <span>{change} vs. mês passado</span>
       </div>
     </div>
-    <div className="bg-primary/10 text-primary rounded-full p-4">
+    <div className="bg-primary-light text-primary rounded-full p-4">
       {icon}
     </div>
   </div>
@@ -47,15 +46,15 @@ const Dashboard: React.FC = () => {
     <div className="space-y-6">
       <h2 className="text-3xl font-bold text-gray-800">Dashboard</h2>
       
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6">
         <StatCard title="Total de Atendimentos" value="1,280" icon={ICONS.calendar} change="+12.5%" changeType="increase" />
         <StatCard title="Atendimentos Concluídos" value="1,150" icon={ICONS.check} change="+15.2%" changeType="increase" />
         <StatCard title="Atendimentos Pendentes" value="105" icon={ICONS.loader} change="-3.1%" changeType="decrease" />
         <StatCard title="Novos Clientes" value="45" icon={ICONS.users} change="+20.0%" changeType="increase" />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
-        <div className="lg:col-span-3 bg-white p-6 rounded-2xl shadow-md">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="bg-white p-6 rounded-2xl shadow-md">
             <h3 className="font-semibold text-lg text-gray-700 mb-4">Agendamentos da Semana</h3>
             <ResponsiveContainer width="100%" height={300}>
                 <BarChart data={appointmentsData} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
@@ -64,11 +63,11 @@ const Dashboard: React.FC = () => {
                     <YAxis />
                     <Tooltip wrapperClassName="rounded-md border bg-white shadow-sm" />
                     <Legend />
-                    <Bar dataKey="Agendamentos" fill="#0D9488" radius={[4, 4, 0, 0]} />
+                    <Bar dataKey="Agendamentos" fill="#3B82F6" radius={[4, 4, 0, 0]} />
                 </BarChart>
             </ResponsiveContainer>
         </div>
-        <div className="lg:col-span-2 bg-white p-6 rounded-2xl shadow-md">
+        <div className="bg-white p-6 rounded-2xl shadow-md">
             <h3 className="font-semibold text-lg text-gray-700 mb-4">Receita Mensal (R$)</h3>
             <ResponsiveContainer width="100%" height={300}>
                  <LineChart data={revenueData} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
@@ -77,7 +76,7 @@ const Dashboard: React.FC = () => {
                     <YAxis />
                     <Tooltip />
                     <Legend />
-                    <Line type="monotone" dataKey="Receita" stroke="#EC4899" strokeWidth={2} activeDot={{ r: 8 }} />
+                    <Line type="monotone" dataKey="Receita" stroke="#8B5CF6" strokeWidth={2} activeDot={{ r: 8 }} />
                 </LineChart>
             </ResponsiveContainer>
         </div>

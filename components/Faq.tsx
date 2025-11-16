@@ -1,3 +1,4 @@
+
 import React from 'react';
 
 const FaqItem: React.FC<{ question: string; children: React.ReactNode }> = ({ question, children }) => (
@@ -19,12 +20,17 @@ const Faq: React.FC = () => {
         <div className="space-y-8 max-w-4xl mx-auto">
             <div>
                 <h2 className="text-3xl font-bold text-gray-800">Perguntas Frequentes (FAQ)</h2>
-                <p className="text-gray-500 mt-1">Encontre respostas para as dúvidas mais comuns sobre o AutoAgende.</p>
+                <p className="text-gray-500 mt-1">Encontre respostas para as dúvidas mais comuns sobre o Interativix bot.</p>
             </div>
             
             <div className="bg-white p-8 rounded-2xl shadow-md space-y-6">
                 <FaqItem question="Como conecto meu número de WhatsApp?">
-                    <p>É muito simples! Vá até a página <strong>"IA & Configurações"</strong>. Lá você encontrará a seção "Integração com WhatsApp". Clique em "Conectar", escaneie o QR Code que aparecerá na tela com o seu app do WhatsApp (em Aparelhos Conectados) e pronto! Seu número estará conectado e pronto para receber agendamentos via IA.</p>
+                    <p>Você pode conectar seu número de duas formas, ambas na página <strong>"IA & Configurações"</strong>:</p>
+                    <ul className="list-disc pl-5 mt-2 space-y-1">
+                        <li><strong>API Oficial (Recomendado):</strong> A forma mais fácil. Basta selecionar esta opção, clicar em "Conectar" e escanear o QR Code com seu celular.</li>
+                        <li><strong>Evolution API (Avançado):</strong> Se você tem sua própria instância da Evolution API, selecione esta opção e preencha a URL e a API Key para conectar.</li>
+                    </ul>
+                    <p className="mt-2">Para a maioria dos casos, recomendamos usar a API Oficial para maior estabilidade e simplicidade.</p>
                 </FaqItem>
                 <FaqItem question="Como funciona o agendamento por Inteligência Artificial?">
                     <p>Nossa IA é integrada ao seu WhatsApp e é treinada para entender as solicitações dos seus clientes. Ela conversa naturalmente, verifica sua agenda em tempo real, oferece horários disponíveis e finaliza o agendamento sem que você precise intervir. Você pode personalizar o comportamento dela na tela de "IA & Configurações".</p>
@@ -35,8 +41,11 @@ const Faq: React.FC = () => {
                 <FaqItem question="Como configuro os serviços que ofereço?">
                     <p>Vá para a seção "Serviços" no menu lateral. Lá, você pode adicionar novos serviços, definir nome, duração e preço. Essas informações serão usadas tanto pela IA quanto pelos agendamentos manuais para calcular a disponibilidade da sua agenda.</p>
                 </FaqItem>
+                 <FaqItem question="Existe uma opção gratuita?">
+                    <p>Sim! Oferecemos o <strong>Plano Grátis</strong> que permite que você utilize as funcionalidades essenciais da agenda para sempre, com algumas limitações. É a maneira perfeita de começar e entender como o Interativix bot pode ajudar seu negócio, sem nenhum custo inicial.</p>
+                </FaqItem>
                 <FaqItem question="O que são os diferentes níveis de permissão de usuário?">
-                    <p>Para garantir a segurança e a organização, o AutoAgende possui três níveis de acesso:</p>
+                    <p>Para garantir a segurança e a organização, o Interativix bot possui três níveis de acesso:</p>
                     <ul className="list-disc pl-5 mt-2 space-y-1">
                         <li><strong>Administrador:</strong> Acesso total a todas as configurações, incluindo IA, planos e permissões de outros usuários.</li>
                         <li><strong>Gerente:</strong> Pode gerenciar agendamentos, clientes e profissionais, mas não tem acesso às configurações críticas do sistema.</li>

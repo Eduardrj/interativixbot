@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { ICONS } from '../constants';
 
@@ -16,8 +15,8 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
         >
           {ICONS.menu}
         </button>
-        <h1 className="text-2xl font-semibold text-gray-800 ml-4 lg:ml-0">
-          AutoAgende
+        <h1 className="text-xl font-semibold text-gray-800 ml-4 lg:ml-0">
+          Interativix bot
         </h1>
       </div>
 
@@ -44,12 +43,12 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
         <div className="flex items-center">
           <img
             className="w-10 h-10 rounded-full object-cover"
-            src="https://ui-avatars.com/api/?name=Admin&background=14B8A6&color=fff"
+            src="https://ui-avatars.com/api/?name=Admin&background=3B82F6&color=fff"
             alt="User avatar"
           />
-          <div className="ml-3">
+          <div className="ml-3 hidden sm:block">
             <p className="text-sm font-semibold text-gray-800">Admin</p>
-            <p className="text-xs text-gray-500">admin@autoagende.com</p>
+            <p className="text-xs text-gray-500">admin@interativix.com</p>
           </div>
         </div>
       </div>

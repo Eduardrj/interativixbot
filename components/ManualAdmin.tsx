@@ -1,3 +1,4 @@
+
 import React from 'react';
 
 const ManualSection: React.FC<{title: string; children: React.ReactNode}> = ({title, children}) => (
@@ -20,15 +21,28 @@ const ManualAdmin: React.FC = () => {
             </div>
 
             <ManualSection title="1. Conectando seu WhatsApp">
-                <p>O primeiro passo para automatizar seus agendamentos é conectar seu número de WhatsApp. O processo é simples e seguro:</p>
-                <ul className="list-disc pl-6 space-y-2 mt-2">
-                    <li>Acesse a página <strong>IA & Configurações</strong>.</li>
-                    <li>No primeiro card, <strong>"Integração com WhatsApp"</strong>, você verá o status atual da conexão.</li>
-                    <li>Clique no botão <strong>"Conectar WhatsApp"</strong>. Uma janela (modal) se abrirá com um QR Code.</li>
-                    <li>Abra o aplicativo do WhatsApp em seu celular, vá em <strong>Configurações &gt; Aparelhos Conectados</strong> e selecione <strong>"Conectar um aparelho"</strong>.</li>
-                    <li>Escaneie o QR Code exibido na tela do AutoAgende.</li>
-                    <li>Pronto! O status mudará para "Conectado" e seu assistente de IA já estará ativo no número configurado.</li>
-                </ul>
+                <p>Para automatizar os agendamentos, o primeiro passo é conectar um número de WhatsApp. Oferecemos duas opções flexíveis:</p>
+                <div className="mt-4 p-4 border-l-4 border-primary/30 bg-primary/5 rounded-r-lg">
+                    <h4 className="font-bold text-gray-800">Opção 1: API Oficial (Recomendado)</h4>
+                    <p className="mt-1">Este método é o mais simples e seguro, ideal para a maioria dos usuários.</p>
+                    <ul className="list-decimal pl-6 space-y-1 mt-2">
+                        <li>Acesse a página <strong>IA & Configurações</strong>.</li>
+                        <li>Na seção "Integração com WhatsApp", certifique-se que <strong>"API Oficial (QR Code)"</strong> está selecionado.</li>
+                        <li>Clique em <strong>"Conectar WhatsApp"</strong>. Uma janela se abrirá com um QR Code.</li>
+                        <li>No seu celular, abra o WhatsApp, vá em <strong>Configurações &gt; Aparelhos Conectados</strong> e escaneie o código.</li>
+                        <li>Pronto! O status mudará para "Conectado".</li>
+                    </ul>
+                </div>
+                <div className="mt-4 p-4 border-l-4 border-amber-500/30 bg-amber-500/5 rounded-r-lg">
+                    <h4 className="font-bold text-gray-800">Opção 2: Evolution API (Não Oficial - Avançado)</h4>
+                    <p className="mt-1">Esta opção é para usuários técnicos que possuem sua própria instância da Evolution API auto-hospedada.</p>
+                     <ul className="list-decimal pl-6 space-y-1 mt-2">
+                        <li>Na página <strong>IA & Configurações</strong>, mude o seletor para <strong>"Evolution API (Não Oficial)"</strong>.</li>
+                        <li>Preencha os campos <strong>URL da API</strong> (o endereço da sua instância) e <strong>API Key</strong> (sua chave de autenticação).</li>
+                        <li>Clique em <strong>"Conectar WhatsApp"</strong>.</li>
+                    </ul>
+                    <p className="mt-2 text-sm text-amber-800"><strong>Importante:</strong> Ao usar este método, você é responsável pela manutenção, estabilidade e custos da sua própria instância da Evolution API.</p>
+                </div>
             </ManualSection>
             
             <ManualSection title="2. Configurando o Chatbot de IA">
@@ -52,9 +66,9 @@ const ManualAdmin: React.FC = () => {
             </ManualSection>
 
              <ManualSection title="4. Planos, Cobrança e Cupons">
-                <p>Na seção <strong>Planos & Cobrança</strong>, você gerencia a parte financeira da sua assinatura do AutoAgende.</p>
+                <p>Na seção <strong>Planos & Cobrança</strong>, você gerencia a parte financeira da sua assinatura do Interativix bot.</p>
                  <ul className="list-disc pl-6 space-y-2 mt-2">
-                    <li><strong>Planos:</strong> Visualize os detalhes do seu plano atual ou faça upgrade.</li>
+                    <li><strong>Planos:</strong> Visualize os detalhes do seu plano atual, compare com as outras opções disponíveis e realize upgrades para acessar mais funcionalidades, como aumento no número de profissionais e limites de automação.</li>
                     <li><strong>Cupons de Desconto:</strong> Crie cupons para campanhas de marketing. Por exemplo, um cupom "PRIMEIROMES" pode oferecer um desconto para novos clientes que contratarem o serviço através de um anúncio.</li>
                 </ul>
             </ManualSection>

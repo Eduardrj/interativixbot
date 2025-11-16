@@ -30,7 +30,7 @@ const KanbanColumn: React.FC<{ title: string; appointments: Appointment[]; statu
 
     return (
         <div 
-            className={`flex-1 flex flex-col bg-base-200 rounded-xl p-4 min-w-[300px] transition-colors ${isOver ? 'bg-base-300' : ''}`}
+            className={`flex-1 flex flex-col bg-slate-100 rounded-xl p-4 min-w-[300px] transition-colors ${isOver ? 'bg-slate-200' : ''}`}
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
             onDrop={handleDrop}
@@ -38,7 +38,7 @@ const KanbanColumn: React.FC<{ title: string; appointments: Appointment[]; statu
             <div className="flex items-center mb-4">
                 <div className={`w-3 h-3 rounded-full mr-2 ${className}`}></div>
                 <h3 className="font-bold text-lg text-gray-700">{title}</h3>
-                <span className="ml-2 bg-base-300 text-gray-500 text-sm font-semibold px-2 py-1 rounded-full">{appointments.length}</span>
+                <span className="ml-2 bg-slate-200 text-gray-500 text-sm font-semibold px-2 py-1 rounded-full">{appointments.length}</span>
             </div>
             <div className="space-y-4 h-full overflow-y-auto pt-2 -mx-2 px-2">
                 {appointments.length > 0 ? (
@@ -90,9 +90,9 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({ appointments, onStatusChange 
         appointments={cancelled} 
         status={AppointmentStatus.Cancelado}
         onStatusChange={onStatusChange}
-        className="bg-error"
+        className="bg-danger"
       />
-      <KanbanColumn 
+       <KanbanColumn 
         title="Personalizado" 
         appointments={custom} 
         status={AppointmentStatus.Personalizado}

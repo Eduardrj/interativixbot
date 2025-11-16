@@ -24,7 +24,7 @@ const NavLink: React.FC<{
     className={`flex items-center px-4 py-3 text-base transition-colors duration-200 transform rounded-lg ${
       isActive
         ? 'bg-primary text-white'
-        : 'text-gray-600 hover:bg-base-300 hover:text-gray-700'
+        : 'text-gray-600 hover:bg-slate-200 hover:text-gray-700'
     }`}
   >
     <span className="w-6 h-6">{icon}</span>
@@ -72,13 +72,13 @@ const Sidebar: React.FC<SidebarProps> = ({ currentPage, setCurrentPage, isOpen, 
         onClick={() => setOpen(false)}
       ></div>
       <aside
-        className={`flex flex-col w-72 h-screen px-5 py-8 overflow-y-auto bg-white border-r rtl:border-r-0 rtl:border-l dark:bg-gray-900 dark:border-gray-700 transform transition-transform z-30 lg:relative lg:translate-x-0 ${
+        className={`fixed top-0 left-0 flex flex-col w-72 h-screen px-5 py-8 overflow-y-auto bg-white border-r rtl:border-r-0 rtl:border-l dark:bg-gray-900 dark:border-gray-700 transform transition-transform z-30 lg:relative lg:translate-x-0 ${
           isOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
-        <a href="#" className="flex items-center text-2xl font-bold text-primary">
-            <svg xmlns="http://www.w3.org/2000/svg" className="w-8 h-8 mr-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2v4"/><path d="M16 2v4"/><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18"/><path d="m9 16 2 2 4-4"/></svg>
-            AutoAgende
+        <a href="#" className="flex items-center text-xl font-bold text-primary">
+          <span className="w-8 h-8 mr-2">{ICONS.robot}</span>
+            Interativix bot
         </a>
 
         <div className="flex flex-col justify-between flex-1 mt-6">
