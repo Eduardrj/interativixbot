@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { User, UserRole } from '../types';
 import { ICONS } from '../constants';
 import Modal from './Modal';
+import { GoogleGenAI } from "@google/genai";
 
 const initialUsers: User[] = [
   { id: 'u1', name: 'Ana Silva', email: 'ana@example.com', role: UserRole.Atendente, avatarUrl: 'https://ui-avatars.com/api/?name=Ana+Silva&background=8B5CF6&color=fff' },
@@ -19,11 +20,12 @@ const SettingsCard: React.FC<{title: string; icon?: React.ReactNode; children: R
     </div>
 );
 
-const ChatSandbox: React.FC = () => {
+const ChatSandbox: React.FC<{systemPrompt: string}> = ({ systemPrompt }) => {
     const [messages, setMessages] = useState<{sender: 'user'|'bot', text: string}[]>([
         { sender: 'bot', text: 'Olá! Como posso te ajudar a agendar seu horário hoje?' }
     ]);
     const [input, setInput] = useState('');
+    const [isLoading, setIsLoading] = useState(false);
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
     const scrollToBottom = () => {
@@ -31,16 +33,41 @@ const ChatSandbox: React.FC = () => {
     }
     useEffect(scrollToBottom, [messages]);
 
-    const handleSend = () => {
-        if (!input.trim()) return;
-        const newMessages = [...messages, { sender: 'user' as 'user', text: input }];
+    const handleSend = async () => {
+        if (!input.trim() || isLoading) return;
+        
+        const userMessage = { sender: 'user' as 'user', text: input };
+        const newMessages = [...messages, userMessage];
         setMessages(newMessages);
         setInput('');
+        setIsLoading(true);
 
-        // Mock bot response
-        setTimeout(() => {
-            setMessages([...newMessages, { sender: 'bot' as 'bot', text: 'Entendido. Verificando horários disponíveis para você...' }]);
-        }, 1000);
+        try {
+            const response = await fetch('/api/chat', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    history: messages, // Send previous messages as history
+                    prompt: input,
+                    systemInstruction: systemPrompt
+                })
+            });
+
+            if (!response.ok) {
+                throw new Error(`API error: ${response.statusText}`);
+            }
+
+            const data = await response.json();
+            setMessages([...newMessages, { sender: 'bot' as 'bot', text: data.reply }]);
+
+        } catch (error) {
+            console.error("Failed to get AI response:", error);
+            setMessages([...newMessages, { sender: 'bot' as 'bot', text: 'Desculpe, não consegui me conectar. Tente novamente mais tarde.' }]);
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     return (
@@ -54,6 +81,18 @@ const ChatSandbox: React.FC = () => {
                         </div>
                     </div>
                 ))}
+                {isLoading && (
+                     <div className="flex items-end gap-2 justify-start">
+                        <div className="w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center flex-shrink-0">{ICONS.robot}</div>
+                        <div className="max-w-xs md:max-w-md p-3 rounded-2xl bg-white text-gray-800 rounded-bl-none shadow-sm">
+                            <div className="flex items-center justify-center space-x-1">
+                                <div className="w-2 h-2 bg-slate-400 rounded-full animate-bounce [animation-delay:-0.3s]"></div>
+                                <div className="w-2 h-2 bg-slate-400 rounded-full animate-bounce [animation-delay:-0.15s]"></div>
+                                <div className="w-2 h-2 bg-slate-400 rounded-full animate-bounce"></div>
+                            </div>
+                        </div>
+                    </div>
+                )}
                 <div ref={messagesEndRef} />
             </div>
             <div className="p-2 border-t bg-white flex">
@@ -62,11 +101,12 @@ const ChatSandbox: React.FC = () => {
                     value={input}
                     onChange={(e) => setInput(e.target.value)}
                     onKeyPress={(e) => e.key === 'Enter' && handleSend()}
-                    placeholder="Digite sua mensagem..." 
-                    className="w-full px-3 py-2 border-gray-300 rounded-lg focus:ring-primary focus:border-primary"
+                    placeholder={isLoading ? "Aguardando resposta..." : "Digite sua mensagem..."}
+                    className="w-full px-3 py-2 border-gray-300 rounded-lg focus:ring-primary focus:border-primary disabled:bg-slate-50"
+                    disabled={isLoading}
                 />
-                <button onClick={handleSend} className="ml-2 p-3 bg-primary text-white rounded-lg hover:bg-primary-hover">
-                    {ICONS.send}
+                <button onClick={handleSend} className="ml-2 p-3 bg-primary text-white rounded-lg hover:bg-primary-hover disabled:bg-primary/50" disabled={isLoading}>
+                   {isLoading ? <div className="w-6 h-6 animate-spin">{ICONS.loader}</div> : ICONS.send}
                 </button>
             </div>
         </div>
@@ -76,7 +116,7 @@ const ChatSandbox: React.FC = () => {
 const Settings: React.FC = () => {
     const [users, setUsers] = useState(initialUsers);
     const [aiModel, setAiModel] = useState('gemini-2.5-pro');
-    const [systemPrompt, setSystemPrompt] = useState("Você é um assistente de agendamento para a plataforma Interativix bot. Pergunte ao usuário qual serviço deseja, preferências de profissional, data e horário. Verifique disponibilidade, confirme dados do cliente e finalize o agendamento. Seja cordial e objetivo.");
+    const [systemPrompt, setSystemPrompt] = useState("Você é um assistente de agendamento para a plataforma Interativix-bot. Pergunte ao usuário qual serviço deseja, preferências de profissional, data e horário. Verifique disponibilidade, confirme dados do cliente e finalize o agendamento. Seja cordial e objetivo.");
     
     const [whatsappStatus, setWhatsappStatus] = useState<'connected' | 'disconnected'>('disconnected');
     const [isWhatsappModalOpen, setIsWhatsappModalOpen] = useState(false);
@@ -190,7 +230,7 @@ const Settings: React.FC = () => {
                     </div>
                      <div>
                         <p className="block text-sm font-medium text-gray-700 mb-2">Sandbox de Teste</p>
-                        <ChatSandbox />
+                        <ChatSandbox systemPrompt={systemPrompt} />
                     </div>
                 </div>
             </SettingsCard>

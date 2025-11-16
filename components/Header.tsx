@@ -16,7 +16,7 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
           {ICONS.menu}
         </button>
         <h1 className="text-xl font-semibold text-gray-800 ml-4 lg:ml-0">
-          Interativix bot
+          Interativix-bot
         </h1>
       </div>
 
