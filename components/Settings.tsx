@@ -126,7 +126,7 @@ const ChatSandbox: React.FC<{systemPrompt: string, aiModel: string}> = ({ system
 
 const Settings: React.FC = () => {
     const [users, setUsers] = useState(initialUsers);
-    const [aiModel, setAiModel] = useState(() => localStorage.getItem('aiModel') || 'gemini-2.5-pro');
+    const [aiModel, setAiModel] = useState(() => localStorage.getItem('aiModel') || 'gemini-1.5-flash');
     const [systemPrompt, setSystemPrompt] = useState(() => localStorage.getItem('systemPrompt') || "Você é um assistente de agendamento para a plataforma Interativix-bot. Pergunte ao usuário qual serviço deseja, preferências de profissional, data e horário. Verifique disponibilidade, confirme dados do cliente e finalize o agendamento. Seja cordial e objetivo.");
     
     const [whatsappStatus, setWhatsappStatus] = useState<'connected' | 'disconnected'>('disconnected');
@@ -230,8 +230,8 @@ const Settings: React.FC = () => {
                          <div>
                             <label className="block text-sm font-medium text-gray-700">Modelo de IA</label>
                              <select value={aiModel} onChange={e => setAiModel(e.target.value)} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm">
-                                <option value="gemini-2.5-flash">Google Gemini 2.5 Flash</option>
-                                <option value="gemini-2.5-pro">Google Gemini 2.5 Pro</option>
+                                <option value="gemini-1.5-flash">Google Gemini 1.5 Flash</option>
+                                <option value="gemini-1.5-pro">Google Gemini 1.5 Pro</option>
                             </select>
                         </div>
                         <div>
