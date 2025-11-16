@@ -9,7 +9,7 @@ export default async function handler(request: Request) {
     }
 
     try {
-        const { history, prompt, systemInstruction } = await request.json();
+        const { history, prompt, systemInstruction, model } = await request.json();
 
         if (!prompt) {
             return new Response(JSON.stringify({ error: 'Prompt is required' }), { status: 400 });
@@ -32,7 +32,7 @@ export default async function handler(request: Request) {
 
         // 4. Criação da Sessão de Chat com Contexto
         const chat: Chat = ai.chats.create({
-            model: 'gemini-2.5-pro', // O modelo pode ser dinâmico no futuro
+            model: model || 'gemini-2.5-pro', // Usa o modelo enviado pelo front-end ou um padrão
             history: chatHistory,
             config: {
                 systemInstruction: systemInstruction || 'Você é um assistente prestativo.',

@@ -20,7 +20,7 @@ const SettingsCard: React.FC<{title: string; icon?: React.ReactNode; children: R
     </div>
 );
 
-const ChatSandbox: React.FC<{systemPrompt: string}> = ({ systemPrompt }) => {
+const ChatSandbox: React.FC<{systemPrompt: string, aiModel: string}> = ({ systemPrompt, aiModel }) => {
     const [messages, setMessages] = useState<{sender: 'user'|'bot', text: string}[]>([
         { sender: 'bot', text: 'Olá! Como posso te ajudar a agendar seu horário hoje?' }
     ]);
@@ -49,9 +49,10 @@ const ChatSandbox: React.FC<{systemPrompt: string}> = ({ systemPrompt }) => {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
-                    history: messages, // Send previous messages as history
+                    history: messages,
                     prompt: input,
-                    systemInstruction: systemPrompt
+                    systemInstruction: systemPrompt,
+                    model: aiModel
                 })
             });
 
@@ -230,7 +231,7 @@ const Settings: React.FC = () => {
                     </div>
                      <div>
                         <p className="block text-sm font-medium text-gray-700 mb-2">Sandbox de Teste</p>
-                        <ChatSandbox systemPrompt={systemPrompt} />
+                        <ChatSandbox systemPrompt={systemPrompt} aiModel={aiModel} />
                     </div>
                 </div>
             </SettingsCard>
