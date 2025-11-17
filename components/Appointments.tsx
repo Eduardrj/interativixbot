@@ -3,6 +3,7 @@ import KanbanBoard from './KanbanBoard';
 import Modal from './Modal';
 import { Appointment, AppointmentStatus, Service, User, UserRole } from '../types';
 import { ICONS } from '../constants';
+import { useAppointments, mockServices, mockAttendants } from '../contexts/AppointmentsContext';
 
 // Mock Data
 const mockServices: Service[] = [
@@ -59,35 +60,9 @@ const CalendarView: React.FC<{appointments: Appointment[]}> = ({appointments}) =
 }
 
 const Appointments: React.FC = () => {
-  const [appointments, setAppointments] = useState<Appointment[]>([]);
+  const { appointments, updateAppointmentStatus, addAppointment } = useAppointments();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [viewMode, setViewMode] = useState<'kanban' | 'calendar'>('kanban');
-
-  useEffect(() => {
-    setAppointments(initialAppointments);
-  }, []);
-
-  const updateAppointmentStatus = (appointmentId: string, newStatus: AppointmentStatus) => {
-    setAppointments(prev =>
-      prev.map(app => (app.id === appointmentId ? { ...app, status: newStatus } : app))
-    );
-  };
-  
-  const handleAddAppointment = (newAppointmentData: Omit<Appointment, 'id' | 'endTime' | 'source'>) => {
-      const service = mockServices.find(s => s.id === newAppointmentData.service.id);
-      if(!service) return;
-
-      const endTime = new Date(newAppointmentData.startTime.getTime() + service.duration * 60000);
-      
-      const newAppointment: Appointment = {
-          id: `A${appointments.length + 1}`,
-          ...newAppointmentData,
-          endTime,
-          source: 'admin'
-      };
-      setAppointments(prev => [...prev, newAppointment]);
-      setIsModalOpen(false);
-  }
 
   return (
     <div className="space-y-6">
@@ -115,7 +90,19 @@ const Appointments: React.FC = () => {
       )}
       
       <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title="Novo Agendamento">
-        <AppointmentForm onSave={handleAddAppointment} services={mockServices} attendants={mockAttendants}/>
+        <AppointmentForm onSave={(newAppointmentData) => {
+            const service = mockServices.find(s => s.id === newAppointmentData.service.id);
+            if(!service) return;
+
+            const endTime = new Date(newAppointmentData.startTime.getTime() + service.duration * 60000);
+            
+            addAppointment({
+                ...newAppointmentData,
+                endTime,
+                source: 'admin'
+            });
+            setIsModalOpen(false);
+        }} services={mockServices} attendants={mockAttendants}/>
       </Modal>
     </div>
   );

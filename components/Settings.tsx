@@ -1,10 +1,10 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { User, UserRole } from '../types';
+import { User, UserRole, AppointmentStatus } from '../types';
 import { ICONS } from '../constants';
 import Modal from './Modal';
 import toast from 'react-hot-toast';
-import * as GoogleGenerativeAIModule from '@google/genai';
-import type { Content } from '@google/genai';
+import { GoogleGenAI } from "@google/genai";
+import { useAppointments, mockServices, mockAttendants } from '../contexts/AppointmentsContext';
 
 const initialUsers: User[] = [
   { id: 'u1', name: 'Ana Silva', email: 'ana@example.com', role: UserRole.Atendente, avatarUrl: 'https://ui-avatars.com/api/?name=Ana+Silva&background=8B5CF6&color=fff' },
@@ -25,6 +25,7 @@ const SettingsCard: React.FC<{title: string; icon?: React.ReactNode; children: R
 
 
 const ChatSandbox: React.FC<{systemPrompt: string, aiModel: string}> = ({ systemPrompt, aiModel }) => {
+    const { addAppointment } = useAppointments();
     const [messages, setMessages] = useState<{sender: 'user'|'bot', text: string}[]>([
         { sender: 'bot', text: 'Olá! Como posso te ajudar a agendar seu horário hoje?' }
     ]);
@@ -54,12 +55,7 @@ const ChatSandbox: React.FC<{systemPrompt: string, aiModel: string}> = ({ system
                 throw new Error("Chave da API Gemini não encontrada. Verifique o arquivo .env.local e reinicie o servidor.");
             }
 
-            const genAIClient = new (GoogleGenerativeAIModule as any).GoogleGenerativeAI(apiKey);
-
-            const chatHistory: Content[] = messages.map(msg => ({
-                role: msg.sender === 'user' ? 'user' as const : 'model' as const,
-                parts: [{ text: msg.text }],
-            }));
+            const genAIClient = new GoogleGenAI(apiKey);
 
             const modelInstance = genAIClient.getGenerativeModel({
                 model: aiModel,
@@ -67,7 +63,10 @@ const ChatSandbox: React.FC<{systemPrompt: string, aiModel: string}> = ({ system
             });
 
             const chat = modelInstance.startChat({
-                history: chatHistory,
+                history: messages.map(msg => ({
+                    role: msg.sender === 'user' ? 'user' : 'model',
+                    parts: [{ text: msg.text }],
+                })),
             });
 
             const result = await chat.sendMessage(input);
@@ -132,8 +131,37 @@ const ChatSandbox: React.FC<{systemPrompt: string, aiModel: string}> = ({ system
 
 const Settings: React.FC = () => {
     const [users, setUsers] = useState(initialUsers);
-    const [aiModel, setAiModel] = useState(() => localStorage.getItem('aiModel') || 'gemini-1.5-flash');
-    const [systemPrompt, setSystemPrompt] = useState(() => localStorage.getItem('systemPrompt') || "Você é um assistente de agendamento para a plataforma Interativix-bot. Pergunte ao usuário qual serviço deseja, preferências de profissional, data e horário. Verifique disponibilidade, confirme dados do cliente e finalize o agendamento. Seja cordial e objetivo.");
+<<<<<<< HEAD
+    const [aiModel, setAiModel] = useState(() => localStorage.getItem('aiModel') || 'gemini-2.5-pro');
+    const [systemPrompt, setSystemPrompt] = useState(() => localStorage.getItem('systemPrompt') || `Você é um assistente de agendamento para a plataforma Interativix-bot.
+
+INSTRUÇÕES:
+1. Saudação: Inicie cumprimentando o usuário de forma cordial e profissional.
+2. Informações necessárias: Pergunte ao usuário (um de cada vez):
+   - Nome completo
+   - Número de telefone
+   - Qual serviço deseja (Corte de Cabelo, Manicure, Limpeza de Pele)
+   - Data preferida (em formato DD/MM/YYYY)
+   - Horário preferido (em formato HH:MM)
+   - Profissional (se tiver preferência)
+
+3. Confirmação: Após coletar todas as informações, revise-as com o usuário.
+
+4. Agendamento confirmado: Quando o usuário confirmar o agendamento, responda com JSON estruturado assim:
+\`\`\`json
+{
+  "action": "CREATE_APPOINTMENT",
+  "clientName": "Nome do Cliente",
+  "clientPhone": "11 98765-4321",
+  "service": "Corte de Cabelo",
+  "date": "17/11/2025",
+  "time": "14:30",
+  "professional": "Ana Silva"
+}
+\`\`\`
+
+5. Tom: Seja sempre cordial, objetivo e profissional.`);
+    const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
     
     const [whatsappStatus, setWhatsappStatus] = useState<'connected' | 'disconnected'>('disconnected');
     const [isWhatsappModalOpen, setIsWhatsappModalOpen] = useState(false);
@@ -147,10 +175,50 @@ const Settings: React.FC = () => {
         toast.success('Configurações de IA salvas com sucesso!');
     };
 
+    const handleSaveAISettings = async () => {
+        setSaveStatus('saving');
+        try {
+            // Simula um delay de processamento
+            await new Promise(resolve => setTimeout(resolve, 500));
+            
+            // Salva no localStorage
+            localStorage.setItem('aiModel', aiModel);
+            localStorage.setItem('systemPrompt', systemPrompt);
+            
+            setSaveStatus('saved');
+            setTimeout(() => setSaveStatus('idle'), 3000);
+            console.log('Configurações de IA salvas com sucesso');
+        } catch (error) {
+            console.error('Erro ao salvar configurações:', error);
+            setSaveStatus('idle');
+        }
+    };
+
     const handleRoleChange = (userId: string, newRole: UserRole) => {
         setUsers(users.map(user => user.id === userId ? { ...user, role: newRole } : user));
     };
 
+<<<<<<< HEAD
+=======
+    const handleSaveAISettings = async () => {
+        setSaveStatus('saving');
+        try {
+            // Simula um delay de processamento
+            await new Promise(resolve => setTimeout(resolve, 500));
+            
+            // Salva no localStorage
+            localStorage.setItem('aiModel', aiModel);
+            localStorage.setItem('systemPrompt', systemPrompt);
+            
+            setSaveStatus('saved');
+            setTimeout(() => setSaveStatus('idle'), 3000);
+            console.log('Configurações de IA salvas com sucesso');
+        } catch (error) {
+            console.error('Erro ao salvar configurações:', error);
+            setSaveStatus('idle');
+        }
+    };
+>>>>>>> nova-branch
 
     const handleWhatsappConnect = () => {
         if (apiType === 'official') {
@@ -252,8 +320,22 @@ const Settings: React.FC = () => {
                              ></textarea>
                              <p className="mt-2 text-xs text-gray-500">Dica: Dê personalidade ao seu bot. Defina como ele deve saudar, se ele deve ser formal ou informal, etc.</p>
                         </div>
+<<<<<<< HEAD
                          <button onClick={handleSaveSettings} className="w-full bg-primary text-white font-bold py-2 px-4 rounded-lg shadow-md hover:bg-primary-hover transition-colors">
                             Salvar Configurações de IA
+=======
+                         <button 
+                            onClick={handleSaveAISettings}
+                            disabled={saveStatus === 'saving'}
+                            className={`w-full font-bold py-2 px-4 rounded-lg shadow-md transition-colors ${
+                                saveStatus === 'saved' 
+                                    ? 'bg-success text-white' 
+                                    : 'bg-primary text-white hover:bg-primary-hover disabled:bg-primary/50'
+                            }`}
+                        >
+                            {saveStatus === 'saving' && 'Salvando...'}
+                            {saveStatus === 'saved' && '✓ Configurações salvas!'}
+                            {saveStatus === 'idle' && 'Salvar Configurações de IA'}
                         </button>
                     </div>
                      <div>
