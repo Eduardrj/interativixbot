@@ -1,11 +1,23 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { ICONS } from '../constants';
+import { useAuth } from '../contexts/AuthContext';
 
 interface HeaderProps {
   toggleSidebar: () => void;
 }
 
 const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
+  const { user, signOut } = useAuth();
+  const [showUserMenu, setShowUserMenu] = useState(false);
+
+  const handleLogout = async () => {
+    await signOut();
+    setShowUserMenu(false);
+  };
+
+  const userEmail = user?.email || 'Usuário';
+  const userName = user?.user_metadata?.name || user?.email?.split('@')[0] || 'Usuário';
+
   return (
     <header className="flex items-center justify-between p-4 bg-white border-b dark:bg-gray-900 dark:border-gray-700">
       <div className="flex items-center">
@@ -40,16 +52,38 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
           </svg>
         </div>
 
-        <div className="flex items-center">
-          <img
-            className="w-10 h-10 rounded-full object-cover"
-            src="https://ui-avatars.com/api/?name=Admin&background=3B82F6&color=fff"
-            alt="User avatar"
-          />
-          <div className="ml-3 hidden sm:block">
-            <p className="text-sm font-semibold text-gray-800">Admin</p>
-            <p className="text-xs text-gray-500">admin@interativix.com</p>
-          </div>
+        <div className="relative">
+          <button
+            onClick={() => setShowUserMenu(!showUserMenu)}
+            className="flex items-center hover:opacity-80 transition"
+          >
+            <img
+              className="w-10 h-10 rounded-full object-cover"
+              src={`https://ui-avatars.com/api/?name=${encodeURIComponent(userName)}&background=3B82F6&color=fff`}
+              alt="User avatar"
+            />
+            <div className="ml-3 hidden sm:block">
+              <p className="text-sm font-semibold text-gray-800">{userName}</p>
+              <p className="text-xs text-gray-500">{userEmail}</p>
+            </div>
+          </button>
+
+          {/* User Menu Dropdown */}
+          {showUserMenu && (
+            <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg z-50 border border-gray-200">
+              <div className="p-4 border-b border-gray-200">
+                <p className="font-semibold text-gray-800">{userName}</p>
+                <p className="text-xs text-gray-500">{userEmail}</p>
+              </div>
+              <button
+                onClick={handleLogout}
+                className="w-full text-left px-4 py-2 hover:bg-gray-100 text-gray-700 flex items-center gap-2"
+              >
+                {ICONS.logout}
+                Sair
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </header>
