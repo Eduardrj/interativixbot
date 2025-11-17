@@ -13,6 +13,7 @@ import Faq from './components/Faq';
 import ManualUsuario from './components/ManualUsuario';
 import ManualAdmin from './components/ManualAdmin';
 import LandingPage from './components/LandingPage';
+import { AppointmentsProvider } from './contexts/AppointmentsContext';
 import type { Page } from './types';
 
 const App: React.FC = () => {
@@ -42,15 +43,17 @@ const App: React.FC = () => {
   }
 
   return (
-    <div className="flex min-h-screen bg-slate-50 text-gray-800">
-      <Sidebar currentPage={currentPage} setCurrentPage={setCurrentPage} isOpen={isSidebarOpen} setOpen={setSidebarOpen} />
-      <div className="flex-1 flex flex-col overflow-hidden">
-        <Header toggleSidebar={() => setSidebarOpen(!isSidebarOpen)} />
-        <main className="flex-1 overflow-x-hidden overflow-y-auto bg-slate-100 p-4 sm:p-6 lg:p-8">
-          {renderPage()}
-        </main>
+    <AppointmentsProvider>
+      <div className="flex min-h-screen bg-slate-50 text-gray-800">
+        <Sidebar currentPage={currentPage} setCurrentPage={setCurrentPage} isOpen={isSidebarOpen} setOpen={setSidebarOpen} />
+        <div className="flex-1 flex flex-col overflow-hidden">
+          <Header toggleSidebar={() => setSidebarOpen(!isSidebarOpen)} />
+          <main className="flex-1 overflow-x-hidden overflow-y-auto bg-slate-100 p-4 sm:p-6 lg:p-8">
+            {renderPage()}
+          </main>
+        </div>
       </div>
-    </div>
+    </AppointmentsProvider>
   );
 };
 
