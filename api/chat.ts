@@ -68,17 +68,45 @@ export default async function handler(
                 },
             });
 
-            // 5. Chamada à API e Envio da Resposta
-            const response_data = await chat.sendMessage({ message: prompt });
-            const replyText = response_data.text;
+            // 5. Chamada à API e Envio da Resposta com Retry
+            let lastError: any;
+            const maxRetries = 3;
+            const baseDelay = 1000; // 1 segundo
 
-            response.statusCode = 200;
-            response.setHeader('Content-Type', 'application/json');
-            response.end(JSON.stringify({ reply: replyText }));
+            for (let attempt = 0; attempt < maxRetries; attempt++) {
+                try {
+                    const response_data = await chat.sendMessage({ message: prompt });
+                    const replyText = response_data.text;
+
+                    response.statusCode = 200;
+                    response.setHeader('Content-Type', 'application/json');
+                    response.end(JSON.stringify({ reply: replyText }));
+                    return;
+                } catch (apiError: any) {
+                    lastError = apiError;
+                    
+                    // Se for erro 503 (overloaded) e não for a última tentativa, retry
+                    if (apiError.status === 503 && attempt < maxRetries - 1) {
+                        const delay = baseDelay * Math.pow(2, attempt); // Backoff exponencial
+                        console.warn(`API overloaded, retrying in ${delay}ms (attempt ${attempt + 1}/${maxRetries})`);
+                        await new Promise(resolve => setTimeout(resolve, delay));
+                        continue;
+                    }
+                    
+                    // Outros erros ou última tentativa
+                    throw apiError;
+                }
+            }
+
+            throw lastError;
         } catch (apiError) {
             console.error("Error calling Google GenAI:", apiError);
-            response.statusCode = 502;
-            response.end(JSON.stringify({ error: 'Error connecting to AI service. Please try again later.' }));
+            const statusCode = (apiError as any).status === 503 ? 503 : 502;
+            const errorMsg = (apiError as any).status === 503 
+                ? 'The AI service is currently overloaded. Please try again in a few moments.'
+                : 'Error connecting to AI service. Please try again later.';
+            response.statusCode = statusCode;
+            response.end(JSON.stringify({ error: errorMsg }));
         }
 
     } catch (error) {
