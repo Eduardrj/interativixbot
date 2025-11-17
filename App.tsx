@@ -13,13 +13,15 @@ import Faq from './components/Faq';
 import ManualUsuario from './components/ManualUsuario';
 import ManualAdmin from './components/ManualAdmin';
 import LandingPage from './components/LandingPage';
+import LoginPage from './components/LoginPage';
 import { AppointmentsProvider } from './contexts/AppointmentsContext';
+import { AuthProvider, useAuth } from './contexts/AuthContext';
 import type { Page } from './types';
 
-const App: React.FC = () => {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+const AppContent: React.FC = () => {
   const [currentPage, setCurrentPage] = useState<Page>('dashboard');
   const [isSidebarOpen, setSidebarOpen] = useState(false);
+  const { isAuthenticated, loading } = useAuth();
 
   const renderPage = () => {
     switch (currentPage) {
@@ -38,22 +40,41 @@ const App: React.FC = () => {
     }
   };
 
-  if (!isLoggedIn) {
-    return <LandingPage onLogin={() => setIsLoggedIn(true)} />;
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-gray-600">Carregando...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return <LoginPage />;
   }
 
   return (
-    <AppointmentsProvider>
-      <div className="flex min-h-screen bg-slate-50 text-gray-800">
-        <Sidebar currentPage={currentPage} setCurrentPage={setCurrentPage} isOpen={isSidebarOpen} setOpen={setSidebarOpen} />
-        <div className="flex-1 flex flex-col overflow-hidden">
-          <Header toggleSidebar={() => setSidebarOpen(!isSidebarOpen)} />
-          <main className="flex-1 overflow-x-hidden overflow-y-auto bg-slate-100 p-4 sm:p-6 lg:p-8">
-            {renderPage()}
-          </main>
-        </div>
+    <div className="flex min-h-screen bg-slate-50 text-gray-800">
+      <Sidebar currentPage={currentPage} setCurrentPage={setCurrentPage} isOpen={isSidebarOpen} setOpen={setSidebarOpen} />
+      <div className="flex-1 flex flex-col overflow-hidden">
+        <Header toggleSidebar={() => setSidebarOpen(!isSidebarOpen)} />
+        <main className="flex-1 overflow-x-hidden overflow-y-auto bg-slate-100 p-4 sm:p-6 lg:p-8">
+          {renderPage()}
+        </main>
       </div>
-    </AppointmentsProvider>
+    </div>
+  );
+};
+
+const App: React.FC = () => {
+  return (
+    <AuthProvider>
+      <AppointmentsProvider>
+        <AppContent />
+      </AppointmentsProvider>
+    </AuthProvider>
   );
 };
 
