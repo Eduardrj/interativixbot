@@ -3,7 +3,8 @@ import { User, UserRole } from '../types';
 import { ICONS } from '../constants';
 import Modal from './Modal';
 import toast from 'react-hot-toast';
-import { GoogleGenerativeAI, type Content } from '@google/genai';
+import * as genAI from '@google/genai';
+import type { Content } from '@google/genai';
 
 const initialUsers: User[] = [
   { id: 'u1', name: 'Ana Silva', email: 'ana@example.com', role: UserRole.Atendente, avatarUrl: 'https://ui-avatars.com/api/?name=Ana+Silva&background=8B5CF6&color=fff' },
@@ -53,7 +54,7 @@ const ChatSandbox: React.FC<{systemPrompt: string, aiModel: string}> = ({ system
                 throw new Error("Chave da API Gemini não encontrada. Verifique o arquivo .env.local e reinicie o servidor.");
             }
 
-            const genAIClient = new GoogleGenerativeAI(apiKey);
+            const genAIClient = new (genAI as any).GoogleGenerativeAI(apiKey);
 
             const chatHistory: Content[] = messages.map(msg => ({
                 role: msg.sender === 'user' ? 'user' as const : 'model' as const,
