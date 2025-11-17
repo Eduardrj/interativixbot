@@ -7,6 +7,19 @@ export default async function handler(
     request: IncomingMessage & { body?: any },
     response: ServerResponse
 ) {
+    // CORS Headers
+    response.setHeader('Access-Control-Allow-Credentials', 'true');
+    response.setHeader('Access-Control-Allow-Origin', process.env.CORS_ORIGIN || 'https://interativixbot.com.br');
+    response.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
+    response.setHeader('Access-Control-Allow-Headers', 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version, Authorization');
+
+    // Handle preflight requests
+    if (request.method === 'OPTIONS') {
+        response.statusCode = 200;
+        response.end();
+        return;
+    }
+
     // 1. Verificação de Segurança e Extração de Dados
     if (request.method !== 'POST') {
         response.statusCode = 405;
