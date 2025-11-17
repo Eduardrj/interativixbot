@@ -23,37 +23,15 @@ const Faq = lazy(() => import('./components/Faq'));
 const ManualUsuario = lazy(() => import('./components/ManualUsuario'));
 const ManualAdmin = lazy(() => import('./components/ManualAdmin'));
 const LandingPage = lazy(() => import('./components/LandingPage'));
-
-const LoadingFallback: React.FC = () => (
-  <div className="flex h-full w-full items-center justify-center">
-    <div className="h-10 w-10 animate-spin text-primary">
-      {ICONS.loader}
-    </div>
-  </div>
-);
-
-const LoadingFallback: React.FC = () => (
-  <div className="flex h-full w-full items-center justify-center">
-    <div className="h-10 w-10 animate-spin text-primary">
-      {ICONS.loader}
-    </div>
-  </div>
-);
-
-// Carregamento dinâmico (lazy loading) dos componentes de página
-const Dashboard = lazy(() => import('./components/Dashboard'));
-const Appointments = lazy(() => import('./components/Appointments'));
-const Settings = lazy(() => import('./components/Settings'));
-const Services = lazy(() => import('./components/Services'));
-const Professionals = lazy(() => import('./components/Professionals'));
-const Clients = lazy(() => import('./components/Clients'));
-const Billing = lazy(() => import('./components/Billing'));
-const Reports = lazy(() => import('./components/Reports'));
-const Faq = lazy(() => import('./components/Faq'));
-const ManualUsuario = lazy(() => import('./components/ManualUsuario'));
-const ManualAdmin = lazy(() => import('./components/ManualAdmin'));
-const LandingPage = lazy(() => import('./components/LandingPage'));
 const LoginPage = lazy(() => import('./components/LoginPage'));
+
+const LoadingFallback: React.FC = () => (
+  <div className="flex h-full w-full items-center justify-center">
+    <div className="h-10 w-10 animate-spin text-primary">
+      {ICONS.loader}
+    </div>
+  </div>
+);
 
 const AppContent: React.FC = () => {
   const [currentPage, setCurrentPage] = useState<Page>('dashboard');
@@ -106,24 +84,6 @@ const AppContent: React.FC = () => {
     </div>
   );
 };
-
-const App: React.FC = () => {
-  return (
-    <AuthProvider>
-      <AppointmentsProvider>
-        <ClientsProvider>
-          <ServicesProvider>
-            <ProfessionalsProvider>
-              <AppContent />
-            </ProfessionalsProvider>
-          </ServicesProvider>
-        </ClientsProvider>
-      </AppointmentsProvider>
-    </AuthProvider>
-  );
-};
-
-export default App;
 
 const App: React.FC = () => {
   return (
