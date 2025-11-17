@@ -16,6 +16,9 @@ import LandingPage from './components/LandingPage';
 import LoginPage from './components/LoginPage';
 import { AppointmentsProvider } from './contexts/AppointmentsContext';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { ClientsProvider } from './contexts/ClientsContext';
+import { ServicesProvider } from './contexts/ServicesContext';
+import { ProfessionalsProvider } from './contexts/ProfessionalsContext';
 import type { Page } from './types';
 
 const AppContent: React.FC = () => {
@@ -72,7 +75,13 @@ const App: React.FC = () => {
   return (
     <AuthProvider>
       <AppointmentsProvider>
-        <AppContent />
+        <ClientsProvider>
+          <ServicesProvider>
+            <ProfessionalsProvider>
+              <AppContent />
+            </ProfessionalsProvider>
+          </ServicesProvider>
+        </ClientsProvider>
       </AppointmentsProvider>
     </AuthProvider>
   );
