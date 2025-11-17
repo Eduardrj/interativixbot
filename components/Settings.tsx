@@ -61,7 +61,43 @@ const ChatSandbox: React.FC<{systemPrompt: string, aiModel: string}> = ({ system
             }
 
             const data = await response.json();
-            setMessages([...newMessages, { sender: 'bot' as 'bot', text: data.reply }]);
+            let replyText = data.reply;
+            let botMessage = { sender: 'bot' as 'bot', text: replyText };
+
+            // Tentar extrair JSON do agendamento
+            const jsonMatch = replyText.match(/```json\n([\s\S]*?)\n```/);
+            if (jsonMatch) {
+                try {
+                    const appointmentData = JSON.parse(jsonMatch[1]);
+                    if (appointmentData.action === 'CREATE_APPOINTMENT') {
+                        // Enviar para API de agendamento
+                        const appointmentResponse = await fetch('/api/appointments', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                clientName: appointmentData.clientName,
+                                clientPhone: appointmentData.clientPhone,
+                                service: appointmentData.service,
+                                date: appointmentData.date.split('/').reverse().join('-'), // Converter para YYYY-MM-DD
+                                time: appointmentData.time,
+                                attendant: appointmentData.professional
+                            })
+                        });
+
+                        if (appointmentResponse.ok) {
+                            const appointmentResult = await appointmentResponse.json();
+                            // Remover JSON do texto da resposta
+                            replyText = replyText.replace(/```json[\s\S]*?```/, '').trim();
+                            replyText += `\n\n✅ ${appointmentResult.message}`;
+                            botMessage = { sender: 'bot' as 'bot', text: replyText };
+                        }
+                    }
+                } catch (e) {
+                    console.log('Appointment JSON parsing skipped or failed');
+                }
+            }
+
+            setMessages([...newMessages, botMessage]);
 
         } catch (error) {
             console.error("Failed to get AI response:", error);
@@ -117,7 +153,34 @@ const ChatSandbox: React.FC<{systemPrompt: string, aiModel: string}> = ({ system
 const Settings: React.FC = () => {
     const [users, setUsers] = useState(initialUsers);
     const [aiModel, setAiModel] = useState(() => localStorage.getItem('aiModel') || 'gemini-2.5-pro');
-    const [systemPrompt, setSystemPrompt] = useState(() => localStorage.getItem('systemPrompt') || "Você é um assistente de agendamento para a plataforma Interativix-bot. Pergunte ao usuário qual serviço deseja, preferências de profissional, data e horário. Verifique disponibilidade, confirme dados do cliente e finalize o agendamento. Seja cordial e objetivo.");
+    const [systemPrompt, setSystemPrompt] = useState(() => localStorage.getItem('systemPrompt') || `Você é um assistente de agendamento para a plataforma Interativix-bot.
+
+INSTRUÇÕES:
+1. Saudação: Inicie cumprimentando o usuário de forma cordial e profissional.
+2. Informações necessárias: Pergunte ao usuário (um de cada vez):
+   - Nome completo
+   - Número de telefone
+   - Qual serviço deseja (Corte de Cabelo, Manicure, Limpeza de Pele)
+   - Data preferida (em formato DD/MM/YYYY)
+   - Horário preferido (em formato HH:MM)
+   - Profissional (se tiver preferência)
+
+3. Confirmação: Após coletar todas as informações, revise-as com o usuário.
+
+4. Agendamento confirmado: Quando o usuário confirmar o agendamento, responda com JSON estruturado assim:
+\`\`\`json
+{
+  "action": "CREATE_APPOINTMENT",
+  "clientName": "Nome do Cliente",
+  "clientPhone": "11 98765-4321",
+  "service": "Corte de Cabelo",
+  "date": "17/11/2025",
+  "time": "14:30",
+  "professional": "Ana Silva"
+}
+\`\`\`
+
+5. Tom: Seja sempre cordial, objetivo e profissional.`);
     const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
     
     const [whatsappStatus, setWhatsappStatus] = useState<'connected' | 'disconnected'>('disconnected');
