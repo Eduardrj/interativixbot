@@ -54,7 +54,7 @@ const ChatSandbox: React.FC<{systemPrompt: string, aiModel: string}> = ({ system
                 throw new Error("Chave da API Gemini não encontrada. Verifique o arquivo .env.local e reinicie o servidor.");
             }
 
-            const genAIClient = new (genAI as any).GoogleGenerativeAI(apiKey);
+            const genAIClient = new (genAI as any).default(apiKey);
 
             const chatHistory: Content[] = messages.map(msg => ({
                 role: msg.sender === 'user' ? 'user' as const : 'model' as const,
