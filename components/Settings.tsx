@@ -3,6 +3,8 @@ import { User, UserRole } from '../types';
 import { ICONS } from '../constants';
 import Modal from './Modal';
 import toast from 'react-hot-toast';
+import * as genAI from '@google/genai';
+import type { Content } from '@google/genai';
 
 const initialUsers: User[] = [
   { id: 'u1', name: 'Ana Silva', email: 'ana@example.com', role: UserRole.Atendente, avatarUrl: 'https://ui-avatars.com/api/?name=Ana+Silva&background=8B5CF6&color=fff' },
@@ -46,32 +48,33 @@ const ChatSandbox: React.FC<{systemPrompt: string, aiModel: string}> = ({ system
         setInput('');
         setIsLoading(true);
 
-
         try {
-            const response = await fetch('/api/chat', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    history: messages,
-                    prompt: input,
-                    systemInstruction: systemPrompt,
-                    model: aiModel
-                })
-            });
-
-
-            if (!response.ok) {
-                const errorData = await response.json().catch(() => null);
-                const errorMessage = errorData?.error || `Erro na API: ${response.statusText}`;
-                throw new Error(errorMessage);
+            const apiKey = process.env.GEMINI_API_KEY;
+            if (!apiKey) {
+                throw new Error("Chave da API Gemini não encontrada. Verifique o arquivo .env.local e reinicie o servidor.");
             }
 
+            const genAIClient = new (genAI as any).GoogleGenerativeAI(apiKey);
 
-            const data = await response.json();
-            setMessages([...newMessages, { sender: 'bot' as 'bot', text: data.reply }]);
+            const chatHistory: Content[] = messages.map(msg => ({
+                role: msg.sender === 'user' ? 'user' as const : 'model' as const,
+                parts: [{ text: msg.text }],
+            }));
 
+            const modelInstance = genAIClient.getGenerativeModel({
+                model: aiModel,
+                systemInstruction: systemPrompt,
+            });
+
+            const chat = modelInstance.startChat({
+                history: chatHistory,
+            });
+
+            const result = await chat.sendMessage(input);
+            const response = result.response;
+            const replyText = response.text();
+
+            setMessages([...newMessages, { sender: 'bot' as 'bot', text: replyText }]);
 
         } catch (error) {
             console.error("Failed to get AI response:", error);
