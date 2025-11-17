@@ -116,8 +116,9 @@ const ChatSandbox: React.FC<{systemPrompt: string, aiModel: string}> = ({ system
 
 const Settings: React.FC = () => {
     const [users, setUsers] = useState(initialUsers);
-    const [aiModel, setAiModel] = useState('gemini-2.5-pro');
-    const [systemPrompt, setSystemPrompt] = useState("Você é um assistente de agendamento para a plataforma Interativix-bot. Pergunte ao usuário qual serviço deseja, preferências de profissional, data e horário. Verifique disponibilidade, confirme dados do cliente e finalize o agendamento. Seja cordial e objetivo.");
+    const [aiModel, setAiModel] = useState(() => localStorage.getItem('aiModel') || 'gemini-2.5-pro');
+    const [systemPrompt, setSystemPrompt] = useState(() => localStorage.getItem('systemPrompt') || "Você é um assistente de agendamento para a plataforma Interativix-bot. Pergunte ao usuário qual serviço deseja, preferências de profissional, data e horário. Verifique disponibilidade, confirme dados do cliente e finalize o agendamento. Seja cordial e objetivo.");
+    const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
     
     const [whatsappStatus, setWhatsappStatus] = useState<'connected' | 'disconnected'>('disconnected');
     const [isWhatsappModalOpen, setIsWhatsappModalOpen] = useState(false);
@@ -128,6 +129,25 @@ const Settings: React.FC = () => {
 
     const handleRoleChange = (userId: string, newRole: UserRole) => {
         setUsers(users.map(user => user.id === userId ? { ...user, role: newRole } : user));
+    };
+
+    const handleSaveAISettings = async () => {
+        setSaveStatus('saving');
+        try {
+            // Simula um delay de processamento
+            await new Promise(resolve => setTimeout(resolve, 500));
+            
+            // Salva no localStorage
+            localStorage.setItem('aiModel', aiModel);
+            localStorage.setItem('systemPrompt', systemPrompt);
+            
+            setSaveStatus('saved');
+            setTimeout(() => setSaveStatus('idle'), 3000);
+            console.log('Configurações de IA salvas com sucesso');
+        } catch (error) {
+            console.error('Erro ao salvar configurações:', error);
+            setSaveStatus('idle');
+        }
     };
 
     const handleWhatsappConnect = () => {
@@ -225,8 +245,18 @@ const Settings: React.FC = () => {
                              ></textarea>
                              <p className="mt-2 text-xs text-gray-500">Dica: Dê personalidade ao seu bot. Defina como ele deve saudar, se ele deve ser formal ou informal, etc.</p>
                         </div>
-                         <button className="w-full bg-primary text-white font-bold py-2 px-4 rounded-lg shadow-md hover:bg-primary-hover transition-colors">
-                            Salvar Configurações de IA
+                         <button 
+                            onClick={handleSaveAISettings}
+                            disabled={saveStatus === 'saving'}
+                            className={`w-full font-bold py-2 px-4 rounded-lg shadow-md transition-colors ${
+                                saveStatus === 'saved' 
+                                    ? 'bg-success text-white' 
+                                    : 'bg-primary text-white hover:bg-primary-hover disabled:bg-primary/50'
+                            }`}
+                        >
+                            {saveStatus === 'saving' && 'Salvando...'}
+                            {saveStatus === 'saved' && '✓ Configurações salvas!'}
+                            {saveStatus === 'idle' && 'Salvar Configurações de IA'}
                         </button>
                     </div>
                      <div>
