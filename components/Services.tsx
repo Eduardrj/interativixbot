@@ -2,23 +2,23 @@ import React, { useState } from 'react';
 import Modal from './Modal';
 import { Service } from '../types';
 import { ICONS } from '../constants';
-
-const mockServices: Service[] = [
-  { id: '1', name: 'Corte de Cabelo', duration: 45, price: 50.0 },
-  { id: '2', name: 'Manicure', duration: 60, price: 40.0 },
-  { id: '3', name: 'Limpeza de Pele', duration: 90, price: 120.0 },
-  { id: '4', name: 'Massagem Relaxante', duration: 60, price: 150.0 },
-];
+import { useServices } from '../contexts/ServicesContext';
 
 const ServiceForm: React.FC<{onSave: (service: Omit<Service, 'id'>) => void, service?: Service | null}> = ({ onSave, service }) => {
     const [name, setName] = useState(service?.name || '');
     const [duration, setDuration] = useState(service?.duration || 0);
     const [price, setPrice] = useState(service?.price || 0);
+    const [loading, setLoading] = useState(false);
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if(name && duration > 0 && price >= 0) {
-            onSave({ name, duration, price });
+        setLoading(true);
+        try {
+            if(name && duration > 0 && price >= 0) {
+                await onSave({ name, duration, price });
+            }
+        } finally {
+            setLoading(false);
         }
     };
     
@@ -28,25 +28,39 @@ const ServiceForm: React.FC<{onSave: (service: Omit<Service, 'id'>) => void, ser
             <input type="number" placeholder="Duração (minutos)" value={duration} onChange={e => setDuration(parseInt(e.target.value, 10))} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary" required />
             <input type="number" placeholder="Preço (R$)" value={price} onChange={e => setPrice(parseFloat(e.target.value))} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary" required />
             <div className="flex justify-end pt-4">
-                <button type="submit" className="bg-primary text-white font-bold py-2 px-4 rounded-lg shadow-md hover:bg-primary-hover transition-colors">
-                    Salvar Serviço
+                <button type="submit" disabled={loading} className="bg-primary text-white font-bold py-2 px-4 rounded-lg shadow-md hover:bg-primary-hover disabled:bg-primary/50 transition-colors">
+                    {loading ? 'Salvando...' : 'Salvar Serviço'}
                 </button>
             </div>
         </form>
-    )
+    );
 }
 
 const Services: React.FC = () => {
-    const [services, setServices] = useState(mockServices);
+    const { services, addService, deleteService, loading } = useServices();
     const [isModalOpen, setIsModalOpen] = useState(false);
-    
-    const handleSaveService = (serviceData: Omit<Service, 'id'>) => {
-        const newService: Service = {
-            id: `S${services.length + 1}`,
-            ...serviceData,
-        };
-        setServices(prev => [...prev, newService]);
-        setIsModalOpen(false);
+
+    const handleSaveService = async (serviceData: Omit<Service, 'id'>) => {
+        try {
+            await addService(serviceData);
+            setIsModalOpen(false);
+        } catch (error) {
+            console.error('Erro ao salvar serviço:', error);
+        }
+    };
+
+    const handleDeleteService = async (id: string) => {
+        if (window.confirm('Tem certeza que deseja deletar este serviço?')) {
+            try {
+                await deleteService(id);
+            } catch (error) {
+                console.error('Erro ao deletar serviço:', error);
+            }
+        }
+    };
+
+    if (loading) {
+        return <div className="text-center py-8">Carregando serviços...</div>;
     }
 
     return (
@@ -75,7 +89,7 @@ const Services: React.FC = () => {
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{service.duration} min</td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">R$ {service.price.toFixed(2)}</td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                    <a href="#" className="text-primary hover:text-primary-hover">Editar</a>
+                                    <button onClick={() => handleDeleteService(service.id)} className="text-red-600 hover:text-red-800 font-medium">Deletar</button>
                                 </td>
                             </tr>
                         ))}
