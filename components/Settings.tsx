@@ -1,8 +1,9 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { User, UserRole } from '../types';
+import { User, UserRole, AppointmentStatus } from '../types';
 import { ICONS } from '../constants';
 import Modal from './Modal';
 import { GoogleGenAI } from "@google/genai";
+import { useAppointments, mockServices, mockAttendants } from '../contexts/AppointmentsContext';
 
 const initialUsers: User[] = [
   { id: 'u1', name: 'Ana Silva', email: 'ana@example.com', role: UserRole.Atendente, avatarUrl: 'https://ui-avatars.com/api/?name=Ana+Silva&background=8B5CF6&color=fff' },
@@ -21,6 +22,7 @@ const SettingsCard: React.FC<{title: string; icon?: React.ReactNode; children: R
 );
 
 const ChatSandbox: React.FC<{systemPrompt: string, aiModel: string}> = ({ systemPrompt, aiModel }) => {
+    const { addAppointment } = useAppointments();
     const [messages, setMessages] = useState<{sender: 'user'|'bot', text: string}[]>([
         { sender: 'bot', text: 'Olá! Como posso te ajudar a agendar seu horário hoje?' }
     ]);
@@ -70,25 +72,37 @@ const ChatSandbox: React.FC<{systemPrompt: string, aiModel: string}> = ({ system
                 try {
                     const appointmentData = JSON.parse(jsonMatch[1]);
                     if (appointmentData.action === 'CREATE_APPOINTMENT') {
-                        // Enviar para API de agendamento
-                        const appointmentResponse = await fetch('/api/appointments', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({
+                        // Encontrar o serviço
+                        const service = mockServices.find(s => 
+                            s.name.toLowerCase() === appointmentData.service.toLowerCase()
+                        );
+                        
+                        // Encontrar o atendente
+                        const attendant = mockAttendants.find(a => 
+                            a.name.toLowerCase() === (appointmentData.professional || '').toLowerCase()
+                        ) || mockAttendants[0]; // Se não encontrar, usar o primeiro
+
+                        if (service) {
+                            // Converter data de DD/MM/YYYY para Date
+                            const [day, month, year] = appointmentData.date.split('/');
+                            const startTime = new Date(`${year}-${month}-${day}T${appointmentData.time}`);
+                            const endTime = new Date(startTime.getTime() + service.duration * 60000);
+
+                            // Criar agendamento usando o contexto
+                            addAppointment({
                                 clientName: appointmentData.clientName,
                                 clientPhone: appointmentData.clientPhone,
-                                service: appointmentData.service,
-                                date: appointmentData.date.split('/').reverse().join('-'), // Converter para YYYY-MM-DD
-                                time: appointmentData.time,
-                                attendant: appointmentData.professional
-                            })
-                        });
+                                service,
+                                startTime,
+                                endTime,
+                                status: AppointmentStatus.Pendente,
+                                attendant,
+                                source: 'whatsapp'
+                            });
 
-                        if (appointmentResponse.ok) {
-                            const appointmentResult = await appointmentResponse.json();
                             // Remover JSON do texto da resposta
                             replyText = replyText.replace(/```json[\s\S]*?```/, '').trim();
-                            replyText += `\n\n✅ ${appointmentResult.message}`;
+                            replyText += `\n\n✅ Agendamento confirmado! ${appointmentData.clientName} agendado em ${appointmentData.date} às ${appointmentData.time}`;
                             botMessage = { sender: 'bot' as 'bot', text: replyText };
                         }
                     }
