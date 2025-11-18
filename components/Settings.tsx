@@ -3,7 +3,6 @@ import { User, UserRole } from '../types';
 import { ICONS } from '../constants';
 import Modal from './Modal';
 import toast from 'react-hot-toast';
-import { useAppointments } from '../contexts/AppointmentsContext';
 import { useAuth } from '../contexts/AuthContext';
 import { API_URL } from '../lib/config';
 
@@ -53,7 +52,7 @@ const ChatSandbox: React.FC<{systemPrompt: string; aiModel: string}> = ({ system
         setIsLoading(true);
 
         try {
-            // Call backend API endpoint instead of direct Gemini API
+            // Route through secure backend API instead of direct Perplexity API call
             const response = await fetch(`${API_URL}/api/chat`, {
                 method: 'POST',
                 headers: {
