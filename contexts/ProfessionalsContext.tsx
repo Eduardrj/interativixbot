@@ -1,7 +1,7 @@
 import React, { createContext, useState, useContext, useEffect, ReactNode } from 'react';
-import { Professional } from '../types';
-import { supabase } from '../lib/supabaseClient';
+import { Professional, UserRole } from '../types';
 import { useAuth } from './AuthContext';
+import { API_URL, getAuthHeaders } from '../lib/config';
 
 interface ProfessionalsContextType {
   professionals: Professional[];
@@ -16,134 +16,133 @@ const ProfessionalsContext = createContext<ProfessionalsContextType | undefined>
 export const ProfessionalsProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [professionals, setProfessionals] = useState<Professional[]>([]);
   const [loading, setLoading] = useState(true);
-  const { user } = useAuth();
+  const { session } = useAuth();
 
-  useEffect(() => {
-    if (!user) {
+  const fetchProfessionals = async () => {
+    if (!session?.access_token) {
       setProfessionals([]);
       setLoading(false);
       return;
     }
 
-    const loadProfessionals = async () => {
-      try {
-        setLoading(true);
-        const { data, error } = await supabase
-          .from('professionals')
-          .select('*')
-          .eq('user_id', user.id)
-          .order('created_at', { ascending: false });
+    try {
+      setLoading(true);
+      const response = await fetch(`${API_URL}/api/professionals`, {
+        headers: getAuthHeaders(session.access_token),
+      });
 
-        if (error) throw error;
-
-        const formattedProfessionals = (data || []).map(p => ({
-          id: p.id,
-          name: p.name,
-          email: p.email,
-          role: 'atendente' as const,
-          avatarUrl: p.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(p.name)}&background=8B5CF6&color=fff`,
-          specialties: p.specialties || [],
-        }));
-
-        setProfessionals(formattedProfessionals);
-      } catch (error) {
-        console.error('Erro ao carregar profissionais:', error);
-      } finally {
-        setLoading(false);
+      if (!response.ok) {
+        throw new Error('Failed to fetch professionals');
       }
-    };
 
-    loadProfessionals();
+      const data = await response.json();
+      
+      const formattedProfessionals = data.map((p: any) => ({
+        id: p.id,
+        name: p.name,
+        email: p.email,
+        role: UserRole.Atendente,
+        avatarUrl: p.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(p.name)}&background=8B5CF6&color=fff`,
+        specialties: p.specialties || [],
+      }));
 
-    const subscription = supabase
-      .channel(`professionals:${user.id}`)
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'professionals',
-          filter: `user_id=eq.${user.id}`,
-        },
-        () => {
-          loadProfessionals();
-        }
-      )
-      .subscribe();
+      setProfessionals(formattedProfessionals);
+    } catch (error) {
+      console.error('Error fetching professionals:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    return () => {
-      subscription.unsubscribe();
-    };
-  }, [user]);
+  useEffect(() => {
+    fetchProfessionals();
+  }, [session]);
 
   const addProfessional = async (professionalData: Omit<Professional, 'id'>): Promise<Professional> => {
+    if (!session?.access_token) {
+      throw new Error('User not authenticated');
+    }
+
     try {
-      if (!user) throw new Error('Usuário não autenticado');
+      const response = await fetch(`${API_URL}/api/professionals`, {
+        method: 'POST',
+        headers: getAuthHeaders(session.access_token),
+        body: JSON.stringify({
+          name: professionalData.name,
+          email: professionalData.email,
+          specialties: professionalData.specialties,
+        }),
+      });
 
-      const { data, error } = await supabase
-        .from('professionals')
-        .insert([
-          {
-            user_id: user.id,
-            name: professionalData.name,
-            email: professionalData.email,
-            avatar_url: professionalData.avatarUrl,
-            specialties: professionalData.specialties,
-          },
-        ])
-        .select()
-        .single();
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to create professional');
+      }
 
-      if (error) throw error;
-
+      const newProfessionalData = await response.json();
+      
       const newProfessional: Professional = {
-        id: data.id,
-        ...professionalData,
+        id: newProfessionalData.id,
+        name: newProfessionalData.name,
+        email: newProfessionalData.email,
+        role: UserRole.Atendente,
+        avatarUrl: newProfessionalData.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(newProfessionalData.name)}&background=8B5CF6&color=fff`,
+        specialties: newProfessionalData.specialties || [],
       };
 
       setProfessionals(prev => [newProfessional, ...prev]);
       return newProfessional;
     } catch (error) {
-      console.error('Erro ao criar profissional:', error);
+      console.error('Error creating professional:', error);
       throw error;
     }
   };
 
   const updateProfessional = async (id: string, professionalData: Partial<Professional>): Promise<void> => {
-    try {
-      const { error } = await supabase
-        .from('professionals')
-        .update({
-          name: professionalData.name,
-          email: professionalData.email,
-          avatar_url: professionalData.avatarUrl,
-          specialties: professionalData.specialties,
-        })
-        .eq('id', id);
+    if (!session?.access_token) {
+      throw new Error('User not authenticated');
+    }
 
-      if (error) throw error;
+    try {
+      const response = await fetch(`${API_URL}/api/professionals/${id}`, {
+        method: 'PUT',
+        headers: getAuthHeaders(session.access_token),
+        body: JSON.stringify(professionalData),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to update professional');
+      }
 
       setProfessionals(prev =>
         prev.map(p => (p.id === id ? { ...p, ...professionalData } : p))
       );
     } catch (error) {
-      console.error('Erro ao atualizar profissional:', error);
+      console.error('Error updating professional:', error);
       throw error;
     }
   };
 
   const deleteProfessional = async (id: string): Promise<void> => {
-    try {
-      const { error } = await supabase
-        .from('professionals')
-        .delete()
-        .eq('id', id);
+    if (!session?.access_token) {
+      throw new Error('User not authenticated');
+    }
 
-      if (error) throw error;
+    try {
+      const response = await fetch(`${API_URL}/api/professionals/${id}`, {
+        method: 'DELETE',
+        headers: getAuthHeaders(session.access_token),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to delete professional');
+      }
 
       setProfessionals(prev => prev.filter(p => p.id !== id));
     } catch (error) {
-      console.error('Erro ao deletar profissional:', error);
+      console.error('Error deleting professional:', error);
       throw error;
     }
   };
@@ -158,7 +157,7 @@ export const ProfessionalsProvider: React.FC<{ children: ReactNode }> = ({ child
 export const useProfessionals = () => {
   const context = useContext(ProfessionalsContext);
   if (context === undefined) {
-    throw new Error('useProfessionals deve ser usado dentro de um ProfessionalsProvider');
+    throw new Error('useProfessionals must be used within a ProfessionalsProvider');
   }
   return context;
 };

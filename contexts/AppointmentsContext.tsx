@@ -2,8 +2,8 @@ import React, { createContext, useState, useContext, useEffect, ReactNode } from
 import { Appointment as AppointmentType, AppointmentStatus } from '../types';
 import { Service, Professional } from '../types';
 import { User } from '../types';
-import { supabase } from '../lib/supabaseClient';
 import { useAuth } from './AuthContext';
+import { API_URL, getAuthHeaders } from '../lib/config';
 
 interface AppointmentsContextType {
   appointments: AppointmentType[];
@@ -31,143 +31,141 @@ const AppointmentsContext = createContext<AppointmentsContextType | undefined>(u
 export const AppointmentsProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [appointments, setAppointments] = useState<AppointmentType[]>([]);
   const [loading, setLoading] = useState(true);
-  const { user } = useAuth();
+  const { session } = useAuth();
 
-  // Carregar agendamentos do Supabase
-  useEffect(() => {
-    if (!user) {
+  const fetchAppointments = async () => {
+    if (!session?.access_token) {
       setAppointments([]);
       setLoading(false);
       return;
     }
 
-    const loadAppointments = async () => {
-      try {
-        setLoading(true);
-        const { data, error } = await supabase
-          .from('appointments')
-          .select('*')
-          .eq('user_id', user.id);
+    try {
+      setLoading(true);
+      const response = await fetch(`${API_URL}/api/appointments`, {
+        headers: getAuthHeaders(session.access_token),
+      });
 
-        if (error) throw error;
-
-        // Converter dados do Supabase para o formato do app
-        const formattedAppointments = (data || []).map(apt => {
-          const service = mockServices.find(s => s.id === apt.service_id) || mockServices[0];
-          const attendant = mockAttendants.find(a => a.id === apt.attendant_id) || mockAttendants[0];
-
-          return {
-            id: apt.id,
-            clientName: apt.client_name,
-            clientPhone: apt.client_phone,
-            service,
-            startTime: new Date(apt.start_time),
-            endTime: new Date(apt.end_time),
-            status: apt.status as AppointmentStatus,
-            attendant,
-            source: apt.source,
-          };
-        });
-
-        setAppointments(formattedAppointments);
-      } catch (error) {
-        console.error('Erro ao carregar agendamentos:', error);
-      } finally {
-        setLoading(false);
+      if (!response.ok) {
+        throw new Error('Failed to fetch appointments');
       }
-    };
 
-    loadAppointments();
+      const data = await response.json();
 
-    // Inscrever-se em mudanças em tempo real
-    const subscription = supabase
-      .channel(`appointments:${user.id}`)
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'appointments',
-          filter: `user_id=eq.${user.id}`,
-        },
-        () => {
-          loadAppointments();
-        }
-      )
-      .subscribe();
+      // Convert data from Supabase to app format
+      const formattedAppointments = data.map((apt: any) => {
+        const service = mockServices.find(s => s.id === apt.service_id) || mockServices[0];
+        const attendant = mockAttendants.find(a => a.id === apt.attendant_id) || mockAttendants[0];
 
-    return () => {
-      subscription.unsubscribe();
-    };
-  }, [user]);
+        return {
+          id: apt.id,
+          clientName: apt.client_name,
+          clientPhone: apt.client_phone,
+          service,
+          startTime: new Date(apt.start_time),
+          endTime: new Date(apt.end_time),
+          status: apt.status as AppointmentStatus,
+          attendant,
+          source: apt.source,
+        };
+      });
+
+      setAppointments(formattedAppointments);
+    } catch (error) {
+      console.error('Error fetching appointments:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchAppointments();
+  }, [session]);
 
   const addAppointment = async (appointmentData: Omit<AppointmentType, 'id'>): Promise<AppointmentType> => {
+    if (!session?.access_token) {
+      throw new Error('User not authenticated');
+    }
+
     try {
-      if (!user) throw new Error('Usuário não autenticado');
+      const response = await fetch(`${API_URL}/api/appointments`, {
+        method: 'POST',
+        headers: getAuthHeaders(session.access_token),
+        body: JSON.stringify({
+          clientName: appointmentData.clientName,
+          clientPhone: appointmentData.clientPhone,
+          service_id: appointmentData.service.id,
+          start_time: appointmentData.startTime.toISOString(),
+          end_time: appointmentData.endTime.toISOString(),
+          status: appointmentData.status,
+          attendant_id: appointmentData.attendant.id,
+        }),
+      });
 
-      const { data, error } = await supabase
-        .from('appointments')
-        .insert([
-          {
-            client_name: appointmentData.clientName,
-            client_phone: appointmentData.clientPhone,
-            service_id: appointmentData.service.id,
-            start_time: appointmentData.startTime.toISOString(),
-            end_time: appointmentData.endTime.toISOString(),
-            status: appointmentData.status,
-            attendant_id: appointmentData.attendant.id,
-            source: appointmentData.source,
-            user_id: user.id,
-          },
-        ])
-        .select()
-        .single();
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to create appointment');
+      }
 
-      if (error) throw error;
-
+      const result = await response.json();
       const newAppointment: AppointmentType = {
-        id: data.id,
+        id: result.appointment.id,
         ...appointmentData,
       };
 
       setAppointments(prev => [...prev, newAppointment]);
       return newAppointment;
     } catch (error) {
-      console.error('Erro ao criar agendamento:', error);
+      console.error('Error creating appointment:', error);
       throw error;
     }
   };
 
   const updateAppointmentStatus = async (id: string, status: AppointmentStatus): Promise<void> => {
-    try {
-      const { error } = await supabase
-        .from('appointments')
-        .update({ status })
-        .eq('id', id);
+    if (!session?.access_token) {
+      throw new Error('User not authenticated');
+    }
 
-      if (error) throw error;
+    try {
+      const response = await fetch(`${API_URL}/api/appointments/${id}`, {
+        method: 'PUT',
+        headers: getAuthHeaders(session.access_token),
+        body: JSON.stringify({ status }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to update appointment status');
+      }
 
       setAppointments(prev =>
         prev.map(apt => (apt.id === id ? { ...apt, status } : apt))
       );
     } catch (error) {
-      console.error('Erro ao atualizar status do agendamento:', error);
+      console.error('Error updating appointment status:', error);
       throw error;
     }
   };
 
   const deleteAppointment = async (id: string): Promise<void> => {
-    try {
-      const { error } = await supabase
-        .from('appointments')
-        .delete()
-        .eq('id', id);
+    if (!session?.access_token) {
+      throw new Error('User not authenticated');
+    }
 
-      if (error) throw error;
+    try {
+      const response = await fetch(`${API_URL}/api/appointments/${id}`, {
+        method: 'DELETE',
+        headers: getAuthHeaders(session.access_token),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to delete appointment');
+      }
 
       setAppointments(prev => prev.filter(apt => apt.id !== id));
     } catch (error) {
-      console.error('Erro ao deletar agendamento:', error);
+      console.error('Error deleting appointment:', error);
       throw error;
     }
   };
@@ -190,7 +188,7 @@ export const AppointmentsProvider: React.FC<{ children: ReactNode }> = ({ childr
 export const useAppointments = () => {
   const context = useContext(AppointmentsContext);
   if (context === undefined) {
-    throw new Error('useAppointments deve ser usado dentro de um AppointmentsProvider');
+    throw new Error('useAppointments must be used within an AppointmentsProvider');
   }
   return context;
 };

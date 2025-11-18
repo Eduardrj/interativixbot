@@ -1,7 +1,7 @@
 import React, { createContext, useState, useContext, useEffect, ReactNode } from 'react';
 import { Service } from '../types';
-import { supabase } from '../lib/supabaseClient';
 import { useAuth } from './AuthContext';
+import { API_URL, getAuthHeaders } from '../lib/config';
 
 interface ServicesContextType {
   services: Service[];
@@ -16,130 +16,125 @@ const ServicesContext = createContext<ServicesContextType | undefined>(undefined
 export const ServicesProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [services, setServices] = useState<Service[]>([]);
   const [loading, setLoading] = useState(true);
-  const { user } = useAuth();
+  const { session } = useAuth();
 
-  useEffect(() => {
-    if (!user) {
+  const fetchServices = async () => {
+    if (!session?.access_token) {
       setServices([]);
       setLoading(false);
       return;
     }
 
-    const loadServices = async () => {
-      try {
-        setLoading(true);
-        const { data, error } = await supabase
-          .from('services')
-          .select('*')
-          .eq('user_id', user.id)
-          .order('created_at', { ascending: false });
+    try {
+      setLoading(true);
+      const response = await fetch(`${API_URL}/api/services`, {
+        headers: getAuthHeaders(session.access_token),
+      });
 
-        if (error) throw error;
-
-        const formattedServices = (data || []).map(s => ({
-          id: s.id,
-          name: s.name,
-          duration: s.duration,
-          price: s.price,
-        }));
-
-        setServices(formattedServices);
-      } catch (error) {
-        console.error('Erro ao carregar serviços:', error);
-      } finally {
-        setLoading(false);
+      if (!response.ok) {
+        throw new Error('Failed to fetch services');
       }
-    };
 
-    loadServices();
+      const data = await response.json();
+      
+      const formattedServices = data.map((s: any) => ({
+        id: s.id,
+        name: s.name,
+        duration: s.duration,
+        price: s.price,
+      }));
 
-    const subscription = supabase
-      .channel(`services:${user.id}`)
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'services',
-          filter: `user_id=eq.${user.id}`,
-        },
-        () => {
-          loadServices();
-        }
-      )
-      .subscribe();
+      setServices(formattedServices);
+    } catch (error) {
+      console.error('Error fetching services:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    return () => {
-      subscription.unsubscribe();
-    };
-  }, [user]);
+  useEffect(() => {
+    fetchServices();
+  }, [session]);
 
   const addService = async (serviceData: Omit<Service, 'id'>): Promise<Service> => {
+    if (!session?.access_token) {
+      throw new Error('User not authenticated');
+    }
+
     try {
-      if (!user) throw new Error('Usuário não autenticado');
+      const response = await fetch(`${API_URL}/api/services`, {
+        method: 'POST',
+        headers: getAuthHeaders(session.access_token),
+        body: JSON.stringify(serviceData),
+      });
 
-      const { data, error } = await supabase
-        .from('services')
-        .insert([
-          {
-            user_id: user.id,
-            name: serviceData.name,
-            duration: serviceData.duration,
-            price: serviceData.price,
-          },
-        ])
-        .select()
-        .single();
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to create service');
+      }
 
-      if (error) throw error;
-
+      const newServiceData = await response.json();
+      
       const newService: Service = {
-        id: data.id,
-        ...serviceData,
+        id: newServiceData.id,
+        name: newServiceData.name,
+        duration: newServiceData.duration,
+        price: newServiceData.price,
       };
 
       setServices(prev => [newService, ...prev]);
       return newService;
     } catch (error) {
-      console.error('Erro ao criar serviço:', error);
+      console.error('Error creating service:', error);
       throw error;
     }
   };
 
   const updateService = async (id: string, serviceData: Partial<Service>): Promise<void> => {
-    try {
-      const { error } = await supabase
-        .from('services')
-        .update({
-          name: serviceData.name,
-          duration: serviceData.duration,
-          price: serviceData.price,
-        })
-        .eq('id', id);
+    if (!session?.access_token) {
+      throw new Error('User not authenticated');
+    }
 
-      if (error) throw error;
+    try {
+      const response = await fetch(`${API_URL}/api/services/${id}`, {
+        method: 'PUT',
+        headers: getAuthHeaders(session.access_token),
+        body: JSON.stringify(serviceData),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to update service');
+      }
 
       setServices(prev =>
         prev.map(s => (s.id === id ? { ...s, ...serviceData } : s))
       );
     } catch (error) {
-      console.error('Erro ao atualizar serviço:', error);
+      console.error('Error updating service:', error);
       throw error;
     }
   };
 
   const deleteService = async (id: string): Promise<void> => {
-    try {
-      const { error } = await supabase
-        .from('services')
-        .delete()
-        .eq('id', id);
+    if (!session?.access_token) {
+      throw new Error('User not authenticated');
+    }
 
-      if (error) throw error;
+    try {
+      const response = await fetch(`${API_URL}/api/services/${id}`, {
+        method: 'DELETE',
+        headers: getAuthHeaders(session.access_token),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to delete service');
+      }
 
       setServices(prev => prev.filter(s => s.id !== id));
     } catch (error) {
-      console.error('Erro ao deletar serviço:', error);
+      console.error('Error deleting service:', error);
       throw error;
     }
   };
@@ -154,7 +149,7 @@ export const ServicesProvider: React.FC<{ children: ReactNode }> = ({ children }
 export const useServices = () => {
   const context = useContext(ServicesContext);
   if (context === undefined) {
-    throw new Error('useServices deve ser usado dentro de um ServicesProvider');
+    throw new Error('useServices must be used within a ServicesProvider');
   }
   return context;
 };

@@ -1,7 +1,7 @@
 import React, { createContext, useState, useContext, useEffect, ReactNode } from 'react';
 import { Client } from '../types';
-import { supabase } from '../lib/supabaseClient';
 import { useAuth } from './AuthContext';
+import { API_URL, getAuthHeaders } from '../lib/config';
 
 interface ClientsContextType {
   clients: Client[];
@@ -16,136 +16,134 @@ const ClientsContext = createContext<ClientsContextType | undefined>(undefined);
 export const ClientsProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [clients, setClients] = useState<Client[]>([]);
   const [loading, setLoading] = useState(true);
-  const { user } = useAuth();
+  const { session } = useAuth();
 
-  useEffect(() => {
-    if (!user) {
+  const fetchClients = async () => {
+    if (!session?.access_token) {
       setClients([]);
       setLoading(false);
       return;
     }
 
-    const loadClients = async () => {
-      try {
-        setLoading(true);
-        const { data, error } = await supabase
-          .from('clients')
-          .select('*')
-          .eq('user_id', user.id)
-          .order('created_at', { ascending: false });
+    try {
+      setLoading(true);
+      const response = await fetch(`${API_URL}/api/clients`, {
+        headers: getAuthHeaders(session.access_token),
+      });
 
-        if (error) throw error;
-
-        const formattedClients = (data || []).map(c => ({
-          id: c.id,
-          name: c.name,
-          phone: c.phone,
-          email: c.email,
-          lastAppointment: c.last_appointment ? new Date(c.last_appointment) : undefined,
-          consentLgpd: c.consent_lgpd,
-        }));
-
-        setClients(formattedClients);
-      } catch (error) {
-        console.error('Erro ao carregar clientes:', error);
-      } finally {
-        setLoading(false);
+      if (!response.ok) {
+        throw new Error('Failed to fetch clients');
       }
-    };
 
-    loadClients();
+      const data = await response.json();
+      
+      const formattedClients = data.map((c: any) => ({
+        id: c.id,
+        name: c.name,
+        phone: c.phone,
+        email: c.email,
+        lastAppointment: c.last_appointment ? new Date(c.last_appointment) : undefined,
+        consentLgpd: c.consent_lgpd,
+      }));
 
-    const subscription = supabase
-      .channel(`clients:${user.id}`)
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'clients',
-          filter: `user_id=eq.${user.id}`,
-        },
-        () => {
-          loadClients();
-        }
-      )
-      .subscribe();
+      setClients(formattedClients);
+    } catch (error) {
+      console.error('Error fetching clients:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    return () => {
-      subscription.unsubscribe();
-    };
-  }, [user]);
+  useEffect(() => {
+    fetchClients();
+  }, [session]);
 
   const addClient = async (clientData: Omit<Client, 'id'>): Promise<Client> => {
+    if (!session?.access_token) {
+      throw new Error('User not authenticated');
+    }
+
     try {
-      if (!user) throw new Error('Usuário não autenticado');
+      const response = await fetch(`${API_URL}/api/clients`, {
+        method: 'POST',
+        headers: getAuthHeaders(session.access_token),
+        body: JSON.stringify({
+          name: clientData.name,
+          phone: clientData.phone,
+          email: clientData.email,
+          consent_lgpd: clientData.consentLgpd,
+        }),
+      });
 
-      const { data, error } = await supabase
-        .from('clients')
-        .insert([
-          {
-            user_id: user.id,
-            name: clientData.name,
-            phone: clientData.phone,
-            email: clientData.email,
-            last_appointment: clientData.lastAppointment?.toISOString(),
-            consent_lgpd: clientData.consentLgpd,
-          },
-        ])
-        .select()
-        .single();
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to create client');
+      }
 
-      if (error) throw error;
-
+      const newClientData = await response.json();
+      
       const newClient: Client = {
-        id: data.id,
-        ...clientData,
+        id: newClientData.id,
+        name: newClientData.name,
+        phone: newClientData.phone,
+        email: newClientData.email,
+        lastAppointment: newClientData.last_appointment ? new Date(newClientData.last_appointment) : undefined,
+        consentLgpd: newClientData.consent_lgpd,
       };
 
       setClients(prev => [newClient, ...prev]);
       return newClient;
     } catch (error) {
-      console.error('Erro ao criar cliente:', error);
+      console.error('Error creating client:', error);
       throw error;
     }
   };
 
   const updateClient = async (id: string, clientData: Partial<Client>): Promise<void> => {
-    try {
-      const { error } = await supabase
-        .from('clients')
-        .update({
-          name: clientData.name,
-          phone: clientData.phone,
-          email: clientData.email,
-          last_appointment: clientData.lastAppointment?.toISOString(),
-          consent_lgpd: clientData.consentLgpd,
-        })
-        .eq('id', id);
+    if (!session?.access_token) {
+      throw new Error('User not authenticated');
+    }
 
-      if (error) throw error;
+    try {
+      const response = await fetch(`${API_URL}/api/clients/${id}`, {
+        method: 'PUT',
+        headers: getAuthHeaders(session.access_token),
+        body: JSON.stringify(clientData),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to update client');
+      }
 
       setClients(prev =>
         prev.map(c => (c.id === id ? { ...c, ...clientData } : c))
       );
     } catch (error) {
-      console.error('Erro ao atualizar cliente:', error);
+      console.error('Error updating client:', error);
       throw error;
     }
   };
 
   const deleteClient = async (id: string): Promise<void> => {
-    try {
-      const { error } = await supabase
-        .from('clients')
-        .delete()
-        .eq('id', id);
+    if (!session?.access_token) {
+      throw new Error('User not authenticated');
+    }
 
-      if (error) throw error;
+    try {
+      const response = await fetch(`${API_URL}/api/clients/${id}`, {
+        method: 'DELETE',
+        headers: getAuthHeaders(session.access_token),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to delete client');
+      }
 
       setClients(prev => prev.filter(c => c.id !== id));
     } catch (error) {
-      console.error('Erro ao deletar cliente:', error);
+      console.error('Error deleting client:', error);
       throw error;
     }
   };
@@ -160,7 +158,7 @@ export const ClientsProvider: React.FC<{ children: ReactNode }> = ({ children })
 export const useClients = () => {
   const context = useContext(ClientsContext);
   if (context === undefined) {
-    throw new Error('useClients deve ser usado dentro de um ClientsProvider');
+    throw new Error('useClients must be used within a ClientsProvider');
   }
   return context;
 };
