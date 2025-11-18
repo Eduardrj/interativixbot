@@ -1,11 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import KanbanBoard from './KanbanBoard';
 import Modal from './Modal';
 import { Appointment, AppointmentStatus, Service, User, UserRole } from '../types';
 import { ICONS } from '../constants';
-import { useAppointments, mockServices, mockAttendants } from '../contexts/AppointmentsContext';
+import { useAppointments } from '../contexts/AppointmentsContext';
 
-// Mock Data
 const mockServices: Service[] = [
   { id: '1', name: 'Corte de Cabelo', duration: 45, price: 50.0 },
   { id: '2', name: 'Manicure', duration: 60, price: 40.0 },
@@ -15,13 +14,6 @@ const mockServices: Service[] = [
 const mockAttendants: User[] = [
   { id: 'u1', name: 'Ana Silva', email: 'ana@example.com', role: UserRole.Atendente, avatarUrl: 'https://ui-avatars.com/api/?name=Ana+Silva&background=8B5CF6&color=fff' },
   { id: 'u2', name: 'Bruno Costa', email: 'bruno@example.com', role: UserRole.Atendente, avatarUrl: 'https://ui-avatars.com/api/?name=Bruno+Costa&background=3B82F6&color=fff' },
-];
-
-const initialAppointments: Appointment[] = [
-  { id: 'A1', clientName: 'Carlos Pereira', clientPhone: '(11) 98765-4321', service: mockServices[0], startTime: new Date(new Date().setHours(10, 0, 0, 0)), endTime: new Date(new Date().setHours(10, 45, 0, 0)), status: AppointmentStatus.Pendente, attendant: mockAttendants[0], source: 'admin' },
-  { id: 'A2', clientName: 'Fernanda Lima', clientPhone: '(21) 91234-5678', service: mockServices[1], startTime: new Date(new Date().setHours(11, 0, 0, 0)), endTime: new Date(new Date().setHours(12, 0, 0, 0)), status: AppointmentStatus.EmAndamento, attendant: mockAttendants[1], source: 'whatsapp' },
-  { id: 'A3', clientName: 'Ricardo Alves', clientPhone: '(31) 99999-8888', service: mockServices[2], startTime: new Date(new Date().setHours(9, 0, 0, 0)), endTime: new Date(new Date().setHours(10, 30, 0, 0)), status: AppointmentStatus.Concluido, attendant: mockAttendants[0], source: 'admin' },
-  { id: 'A4', clientName: 'Juliana Souza', clientPhone: '(41) 98888-7777', service: mockServices[0], startTime: new Date(new Date(new Date().setDate(new Date().getDate() + 1)).setHours(14, 0, 0, 0)), endTime: new Date(new Date(new Date().setDate(new Date().getDate() + 1)).setHours(14, 45, 0, 0)), status: AppointmentStatus.Pendente, attendant: mockAttendants[1], source: 'whatsapp' },
 ];
 
 const CalendarView: React.FC<{appointments: Appointment[]}> = ({appointments}) => {
@@ -47,7 +39,7 @@ const CalendarView: React.FC<{appointments: Appointment[]}> = ({appointments}) =
                             .map(app => (
                                 <div key={app.id} className="text-xs bg-primary-light text-primary p-1 sm:p-2 rounded-lg mb-2">
                                     <p className="font-bold hidden sm:block">{app.service.name}</p>
-                                    <p>{app.clientName.split(' ')[0]}</p>
+                                    <p>{app.clientName.split(' ')}</p>
                                     <p>{app.startTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
                                 </div>
                             ))
@@ -108,7 +100,6 @@ const Appointments: React.FC = () => {
   );
 };
 
-// ... (AppointmentForm remains the same)
 const AppointmentForm: React.FC<{onSave: (data: any) => void, services: Service[], attendants: User[]}> = ({ onSave, services, attendants }) => {
     const [clientName, setClientName] = useState('');
     const [clientPhone, setClientPhone] = useState('');
@@ -178,6 +169,5 @@ const AppointmentForm: React.FC<{onSave: (data: any) => void, services: Service[
         </form>
     );
 };
-
 
 export default Appointments;
