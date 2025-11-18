@@ -47,7 +47,7 @@ export default async function handler(
  return;
  }
  
- const { history = [], prompt, systemInstruction, model = 'sonar-pro' } = parsedBody;
+ const { history = [], prompt, systemInstruction, model = 'sonar-reasoning-pro' } = parsedBody;
  
  if (!prompt) {
  response.statusCode = 400;
