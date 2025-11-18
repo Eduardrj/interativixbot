@@ -141,7 +141,8 @@ export default async function handler(
  
  const data = await perplexityResponse.json();
  
- const replyText = data.choices?.?.message?.content || 'No response generated';
+ // Fixed TypeScript syntax errors
+ const replyText = data.choices?.[0]?.message?.content || 'No response generated';
  
  response.statusCode = 200;
  response.setHeader('Content-Type', 'application/json');
