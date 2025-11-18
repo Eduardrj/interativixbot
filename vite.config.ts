@@ -16,8 +16,8 @@ export default defineConfig(({ mode }) => {
       },
       plugins: [dyadComponentTagger(), react()],
       define: {
-        'process.env.API_KEY': JSON.stringify(env.GEMINI_API_KEY),
-        'process.env.GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY)
+        // SECURITY: Do NOT expose GEMINI_API_KEY to client
+        // API key stays server-side only in api/chat.ts
       },
       resolve: {
         alias: {

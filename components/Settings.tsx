@@ -3,8 +3,9 @@ import { User, UserRole } from '../types';
 import { ICONS } from '../constants';
 import Modal from './Modal';
 import toast from 'react-hot-toast';
-import { GoogleGenerativeAI } from "@google/generative-ai";
 import { useAppointments } from '../contexts/AppointmentsContext';
+import { useAuth } from '../contexts/AuthContext';
+import { API_URL } from '../lib/config';
 
 const initialUsers: User[] = [
   { id: 'u1', name: 'Ana Silva', email: 'ana@example.com', role: UserRole.Atendente, avatarUrl: 'https://ui-avatars.com/api/?name=Ana+Silva&background=8B5CF6&color=fff' },
@@ -23,7 +24,7 @@ const SettingsCard: React.FC<{title: string; icon?: React.ReactNode; children: R
 );
 
 const ChatSandbox: React.FC<{systemPrompt: string; aiModel: string}> = ({ systemPrompt, aiModel }) => {
-    const { addAppointment } = useAppointments();
+    const { session } = useAuth();
     const [messages, setMessages] = useState<{sender: 'user'|'bot'; text: string}[]>([
         { sender: 'bot', text: 'Olá! Como posso te ajudar a agendar seu horário hoje?' }
     ]);
@@ -40,6 +41,11 @@ const ChatSandbox: React.FC<{systemPrompt: string; aiModel: string}> = ({ system
     const handleSend = async () => {
         if (!input.trim() || isLoading) return;
         
+        if (!session?.access_token) {
+            toast.error('Sessão expirada. Faça login novamente.');
+            return;
+        }
+        
         const userMessage = { sender: 'user' as const, text: input };
         const newMessages = [...messages, userMessage];
         setMessages(newMessages);
@@ -47,27 +53,28 @@ const ChatSandbox: React.FC<{systemPrompt: string; aiModel: string}> = ({ system
         setIsLoading(true);
 
         try {
-            const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
-            if (!apiKey) {
-                throw new Error("Chave da API Gemini não encontrada. Verifique o arquivo .env.local e reinicie o servidor.");
+            // Call backend API endpoint instead of direct Gemini API
+            const response = await fetch(`${API_URL}/api/chat`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${session.access_token}`,
+                },
+                body: JSON.stringify({
+                    prompt: input,
+                    history: messages,
+                    systemInstruction: systemPrompt,
+                    model: aiModel,
+                }),
+            });
+
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.error || `API error: ${response.status}`);
             }
 
-            const genAIClient = new GoogleGenerativeAI(apiKey);
-            const modelInstance = genAIClient.getGenerativeModel({
-                model: aiModel,
-                systemInstruction: systemPrompt,
-            });
-
-            const chat = modelInstance.startChat({
-                history: messages.map(msg => ({
-                    role: msg.sender === 'user' ? 'user' : 'model',
-                    parts: [{ text: msg.text }],
-                })),
-            });
-
-            const result = await chat.sendMessage(input);
-            const response = result.response;
-            const replyText = response.text();
+            const data = await response.json();
+            const replyText = data.reply || 'Desculpe, não consegui processar sua solicitação.';
 
             setMessages([...newMessages, { sender: 'bot' as const, text: replyText }]);
 
@@ -75,6 +82,7 @@ const ChatSandbox: React.FC<{systemPrompt: string; aiModel: string}> = ({ system
             console.error("Failed to get AI response:", error);
             const friendlyMessage = error instanceof Error ? error.message : 'Não foi possível conectar.';
             setMessages([...newMessages, { sender: 'bot' as const, text: `Desculpe, ocorreu um erro: ${friendlyMessage}` }]);
+            toast.error('Erro ao enviar mensagem: ' + friendlyMessage);
         } finally {
             setIsLoading(false);
         }
