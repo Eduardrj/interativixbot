@@ -1,4 +1,5 @@
 import { IncomingMessage, ServerResponse } from 'http';
+import { verifySupabaseToken, extractBearerToken } from '../lib/auth';
 
 interface AppointmentData {
     clientName: string;
@@ -8,9 +9,6 @@ interface AppointmentData {
     time: string;
     attendant?: string;
 }
-
-// Mock database - em produção seria um banco de dados real
-let appointments: any[] = [];
 
 export default async function handler(
     request: IncomingMessage & { body?: any },
@@ -35,6 +33,27 @@ export default async function handler(
         return;
     }
 
+    // NOVO: Verificar autenticação JWT
+    const authHeader = request.headers.authorization as string | undefined;
+    const token = extractBearerToken(authHeader);
+
+    if (!token) {
+        response.statusCode = 401;
+        response.end(JSON.stringify({ error: 'Missing or invalid Authorization header. Please provide a valid JWT token.' }));
+        return;
+    }
+
+    let userId: string;
+    try {
+        const verified = await verifySupabaseToken(token, process.env.VITE_SUPABASE_URL || '');
+        userId = verified.userId;
+    } catch (authError) {
+        console.error('Authentication failed:', authError);
+        response.statusCode = 401;
+        response.end(JSON.stringify({ error: 'Invalid or expired token' }));
+        return;
+    }
+
     try {
         let body = '';
         
@@ -51,21 +70,20 @@ export default async function handler(
             return;
         }
 
-        // Criar agendamento
+        // Criar agendamento com user_id para isolamento de dados
         const newAppointment = {
             id: `A${Date.now()}`,
             clientName: appointmentData.clientName,
             clientPhone: appointmentData.clientPhone,
             service: appointmentData.service,
             startTime: new Date(`${appointmentData.date}T${appointmentData.time}`),
-            endTime: new Date(`${appointmentData.date}T${appointmentData.time}`), // será calculado no frontend
+            endTime: new Date(`${appointmentData.date}T${appointmentData.time}`),
             status: 'Pendente',
             attendant: appointmentData.attendant || 'Não atribuído',
             source: 'whatsapp',
+            userId: userId,
             createdAt: new Date()
         };
-
-        appointments.push(newAppointment);
 
         response.statusCode = 201;
         response.setHeader('Content-Type', 'application/json');

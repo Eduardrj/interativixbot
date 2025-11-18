@@ -1,17 +1,14 @@
 // Configuration for API URLs based on environment
 export const getApiUrl = (): string => {
-  // In development, use localhost
   if (import.meta.env.DEV) {
     return 'http://localhost:3001';
   }
 
-  // In production, use the environment variable or the current domain
   const envUrl = import.meta.env.VITE_API_URL;
   if (envUrl) {
     return envUrl;
   }
 
-  // Fallback to current domain (for Vercel deployment)
   return `${window.location.protocol}//${window.location.host}`;
 };
 
@@ -39,3 +36,20 @@ export const corsConfig = {
     'Authorization',
   ],
 };
+
+/**
+ * Helper function to create authenticated fetch headers with JWT token
+ * @param token JWT token from Supabase session
+ * @returns Headers object with Authorization bearer token
+ */
+export function getAuthHeaders(token: string | null): HeadersInit {
+  const headers: HeadersInit = {
+    'Content-Type': 'application/json',
+  };
+
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+
+  return headers;
+}

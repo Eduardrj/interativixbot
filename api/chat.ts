@@ -1,9 +1,6 @@
 // @ts-ignore
 import { IncomingMessage, ServerResponse } from 'http';
-
-// Perplexity API integration for interativixbot
-// Uses the pplx-api REST endpoint compatible with OpenAI's interface
-// This replaces Google Gemini due to quota limitations
+import { verifySupabaseToken, extractBearerToken } from '../lib/auth';
 
 export default async function handler(
  request: IncomingMessage & { body?: any },
@@ -15,24 +12,41 @@ export default async function handler(
  response.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
  response.setHeader('Access-Control-Allow-Headers', 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version, Authorization');
  
- // Handle preflight requests
  if (request.method === 'OPTIONS') {
  response.statusCode = 200;
  response.end();
  return;
  }
  
- // 1. Segurança: Apenas POST permitido
  if (request.method !== 'POST') {
  response.statusCode = 405;
  response.end(JSON.stringify({ error: 'Method not allowed' }));
  return;
  }
+
+ const authHeader = request.headers.authorization as string | undefined;
+ const token = extractBearerToken(authHeader);
+
+ if (!token) {
+   response.statusCode = 401;
+   response.end(JSON.stringify({ error: 'Missing or invalid Authorization header. Please provide a valid JWT token.' }));
+   return;
+ }
+
+ let userId: string;
+ try {
+   const verified = await verifySupabaseToken(token, process.env.VITE_SUPABASE_URL || '');
+   userId = verified.userId;
+ } catch (authError) {
+   console.error('Authentication failed:', authError);
+   response.statusCode = 401;
+   response.end(JSON.stringify({ error: 'Invalid or expired token' }));
+   return;
+ }
  
  try {
  let body = '';
  
- // Coletar o corpo da requisição
  for await (const chunk of request) {
  body += chunk.toString();
  }
@@ -55,7 +69,6 @@ export default async function handler(
  return;
  }
  
- // 2. Verificar API Key
  const apiKey = process.env.PERPLEXITY_API_KEY;
  if (!apiKey) {
  console.error("Perplexity API key not found in environment variables");
@@ -65,10 +78,8 @@ export default async function handler(
  }
  
  try {
- // 3. Preparar mensagens no formato OpenAI/Perplexity
  const messages: Array<{ role: string; content: string }> = [];
  
- // Adicionar histórico
  history.forEach((msg: { sender: string; text: string }) => {
  messages.push({
  role: msg.sender === 'user' ? 'user' : 'assistant',
@@ -76,13 +87,11 @@ export default async function handler(
  });
  });
  
- // Adicionar mensagem atual do usuário
  messages.push({
  role: 'user',
  content: prompt,
  });
  
- // 4. Preparar payload para Perplexity
  const requestPayload = {
  model: model,
  messages: messages,
@@ -91,7 +100,6 @@ export default async function handler(
  system: systemInstruction || 'Você é um assistente prestativo e educativo.',
  };
  
- // 5. Fazer requisição para Perplexity API com retry
  let lastError: any;
  const maxRetries = 3;
  const baseDelay = 1000;
@@ -111,7 +119,6 @@ export default async function handler(
  const errorData = await perplexityResponse.text();
  console.error(`Perplexity API error (${perplexityResponse.status}):`, errorData);
  
- // Se for 429 (rate limit) e não for a última tentativa, retry
  if (perplexityResponse.status === 429 && attempt < maxRetries - 1) {
  const delay = baseDelay * Math.pow(2, attempt);
  console.warn(`Rate limit hit, retrying in ${delay}ms (attempt ${attempt + 1}/${maxRetries})`);
@@ -119,7 +126,6 @@ export default async function handler(
  continue;
  }
  
- // Tratamento específico de outros erros
  if (perplexityResponse.status === 401) {
  response.statusCode = 500;
  response.end(JSON.stringify({ error: 'Authentication failed with AI service' }));
@@ -135,18 +141,16 @@ export default async function handler(
  
  const data = await perplexityResponse.json();
  
- // 6. Extrair resposta
- const replyText = data.choices?.[0]?.message?.content || 'No response generated';
+ const replyText = data.choices?.?.message?.content || 'No response generated';
  
  response.statusCode = 200;
  response.setHeader('Content-Type', 'application/json');
- response.end(JSON.stringify({ reply: replyText }));
+ response.end(JSON.stringify({ reply: replyText, userId }));
  return;
  
  } catch (apiError: any) {
  lastError = apiError;
  
- // Se for erro de rede e não for a última tentativa, retry
  if (attempt < maxRetries - 1 && !apiError.message.includes('Unauthorized')) {
  const delay = baseDelay * Math.pow(2, attempt);
  console.warn(`API error, retrying in ${delay}ms (attempt ${attempt + 1}/${maxRetries}):`, apiError.message);
