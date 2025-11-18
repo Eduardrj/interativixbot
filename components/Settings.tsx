@@ -1,17 +1,16 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { User, UserRole, AppointmentStatus } from '../types';
+import { User, UserRole } from '../types';
 import { ICONS } from '../constants';
 import Modal from './Modal';
 import toast from 'react-hot-toast';
-import { GoogleGenAI } from "@google/genai";
-import { useAppointments, mockServices, mockAttendants } from '../contexts/AppointmentsContext';
+import { GoogleGenerativeAI } from "@google/generative-ai";
+import { useAppointments } from '../contexts/AppointmentsContext';
 
 const initialUsers: User[] = [
   { id: 'u1', name: 'Ana Silva', email: 'ana@example.com', role: UserRole.Atendente, avatarUrl: 'https://ui-avatars.com/api/?name=Ana+Silva&background=8B5CF6&color=fff' },
   { id: 'u2', name: 'Bruno Costa', email: 'bruno@example.com', role: UserRole.Gerente, avatarUrl: 'https://ui-avatars.com/api/?name=Bruno+Costa&background=3B82F6&color=fff' },
   { id: 'u3', name: 'Admin', email: 'admin@interativix.com', role: UserRole.Administrador, avatarUrl: 'https://ui-avatars.com/api/?name=Admin&background=F97316&color=fff' },
 ];
-
 
 const SettingsCard: React.FC<{title: string; icon?: React.ReactNode; children: React.ReactNode}> = ({title, icon, children}) => (
     <div className="bg-white p-6 rounded-2xl shadow-md">
@@ -23,40 +22,37 @@ const SettingsCard: React.FC<{title: string; icon?: React.ReactNode; children: R
     </div>
 );
 
-
-const ChatSandbox: React.FC<{systemPrompt: string, aiModel: string}> = ({ systemPrompt, aiModel }) => {
+const ChatSandbox: React.FC<{systemPrompt: string; aiModel: string}> = ({ systemPrompt, aiModel }) => {
     const { addAppointment } = useAppointments();
-    const [messages, setMessages] = useState<{sender: 'user'|'bot', text: string}[]>([
+    const [messages, setMessages] = useState<{sender: 'user'|'bot'; text: string}[]>([
         { sender: 'bot', text: 'Olá! Como posso te ajudar a agendar seu horário hoje?' }
     ]);
     const [input, setInput] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
-
     const scrollToBottom = () => {
-        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
-    }
+        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    };
+    
     useEffect(scrollToBottom, [messages]);
-
 
     const handleSend = async () => {
         if (!input.trim() || isLoading) return;
         
-        const userMessage = { sender: 'user' as 'user', text: input };
+        const userMessage = { sender: 'user' as const, text: input };
         const newMessages = [...messages, userMessage];
         setMessages(newMessages);
         setInput('');
         setIsLoading(true);
 
         try {
-            const apiKey = process.env.GEMINI_API_KEY;
+            const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
             if (!apiKey) {
                 throw new Error("Chave da API Gemini não encontrada. Verifique o arquivo .env.local e reinicie o servidor.");
             }
 
-            const genAIClient = new GoogleGenAI(apiKey);
-
+            const genAIClient = new GoogleGenerativeAI(apiKey);
             const modelInstance = genAIClient.getGenerativeModel({
                 model: aiModel,
                 systemInstruction: systemPrompt,
@@ -73,17 +69,16 @@ const ChatSandbox: React.FC<{systemPrompt: string, aiModel: string}> = ({ system
             const response = result.response;
             const replyText = response.text();
 
-            setMessages([...newMessages, { sender: 'bot' as 'bot', text: replyText }]);
+            setMessages([...newMessages, { sender: 'bot' as const, text: replyText }]);
 
         } catch (error) {
             console.error("Failed to get AI response:", error);
             const friendlyMessage = error instanceof Error ? error.message : 'Não foi possível conectar.';
-            setMessages([...newMessages, { sender: 'bot' as 'bot', text: `Desculpe, ocorreu um erro: ${friendlyMessage}` }]);
+            setMessages([...newMessages, { sender: 'bot' as const, text: `Desculpe, ocorreu um erro: ${friendlyMessage}` }]);
         } finally {
             setIsLoading(false);
         }
     };
-
 
     return (
         <div className="border rounded-lg flex flex-col h-96">
@@ -125,72 +120,33 @@ const ChatSandbox: React.FC<{systemPrompt: string, aiModel: string}> = ({ system
                 </button>
             </div>
         </div>
-    )
-}
-
+    );
+};
 
 const Settings: React.FC = () => {
     const [users, setUsers] = useState(initialUsers);
-<<<<<<< HEAD
-    const [aiModel, setAiModel] = useState(() => localStorage.getItem('aiModel') || 'gemini-2.5-pro');
-    const [systemPrompt, setSystemPrompt] = useState(() => localStorage.getItem('systemPrompt') || `Você é um assistente de agendamento para a plataforma Interativix-bot.
-
-INSTRUÇÕES:
-1. Saudação: Inicie cumprimentando o usuário de forma cordial e profissional.
-2. Informações necessárias: Pergunte ao usuário (um de cada vez):
-   - Nome completo
-   - Número de telefone
-   - Qual serviço deseja (Corte de Cabelo, Manicure, Limpeza de Pele)
-   - Data preferida (em formato DD/MM/YYYY)
-   - Horário preferido (em formato HH:MM)
-   - Profissional (se tiver preferência)
-
-3. Confirmação: Após coletar todas as informações, revise-as com o usuário.
-
-4. Agendamento confirmado: Quando o usuário confirmar o agendamento, responda com JSON estruturado assim:
-\`\`\`json
-{
-  "action": "CREATE_APPOINTMENT",
-  "clientName": "Nome do Cliente",
-  "clientPhone": "11 98765-4321",
-  "service": "Corte de Cabelo",
-  "date": "17/11/2025",
-  "time": "14:30",
-  "professional": "Ana Silva"
-}
-\`\`\`
-
-5. Tom: Seja sempre cordial, objetivo e profissional.`);
+    const [aiModel, setAiModel] = useState(() => localStorage.getItem('aiModel') || 'gemini-1.5-flash');
+    const [systemPrompt, setSystemPrompt] = useState(() => localStorage.getItem('systemPrompt') || `Você é um assistente de agendamento para Interativix-bot. Saudação cordial, coleta dados um por um (nome, telefone, serviço, data, hora), confirmação, agendamento com JSON estruturado. Tom: cordial, objetivo, profissional.`);
     const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
-    
     const [whatsappStatus, setWhatsappStatus] = useState<'connected' | 'disconnected'>('disconnected');
     const [isWhatsappModalOpen, setIsWhatsappModalOpen] = useState(false);
     const [apiType, setApiType] = useState<'official' | 'evolution'>('official');
     const [apiUrl, setApiUrl] = useState('');
     const [apiKey, setApiKey] = useState('');
 
-    const handleSaveSettings = () => {
-        localStorage.setItem('aiModel', aiModel);
-        localStorage.setItem('systemPrompt', systemPrompt);
-        toast.success('Configurações de IA salvas com sucesso!');
-    };
-
     const handleSaveAISettings = async () => {
         setSaveStatus('saving');
         try {
-            // Simula um delay de processamento
             await new Promise(resolve => setTimeout(resolve, 500));
-            
-            // Salva no localStorage
             localStorage.setItem('aiModel', aiModel);
             localStorage.setItem('systemPrompt', systemPrompt);
-            
             setSaveStatus('saved');
             setTimeout(() => setSaveStatus('idle'), 3000);
-            console.log('Configurações de IA salvas com sucesso');
+            toast.success('Configurações de IA salvas com sucesso!');
         } catch (error) {
             console.error('Erro ao salvar configurações:', error);
             setSaveStatus('idle');
+            toast.error('Erro ao salvar configurações');
         }
     };
 
@@ -198,37 +154,14 @@ INSTRUÇÕES:
         setUsers(users.map(user => user.id === userId ? { ...user, role: newRole } : user));
     };
 
-<<<<<<< HEAD
-=======
-    const handleSaveAISettings = async () => {
-        setSaveStatus('saving');
-        try {
-            // Simula um delay de processamento
-            await new Promise(resolve => setTimeout(resolve, 500));
-            
-            // Salva no localStorage
-            localStorage.setItem('aiModel', aiModel);
-            localStorage.setItem('systemPrompt', systemPrompt);
-            
-            setSaveStatus('saved');
-            setTimeout(() => setSaveStatus('idle'), 3000);
-            console.log('Configurações de IA salvas com sucesso');
-        } catch (error) {
-            console.error('Erro ao salvar configurações:', error);
-            setSaveStatus('idle');
-        }
-    };
->>>>>>> nova-branch
-
     const handleWhatsappConnect = () => {
         if (apiType === 'official') {
             setIsWhatsappModalOpen(true);
         } else {
             if (!apiUrl || !apiKey) {
-                alert('Por favor, preencha a URL da API e a API Key.');
+                toast.error('Por favor, preencha a URL da API e a API Key.');
                 return;
             }
-            // Simulating connection for Evolution API
             console.log('Conectando com Evolution API:', { apiUrl, apiKey });
             setWhatsappStatus('connected');
         }
@@ -237,21 +170,19 @@ INSTRUÇÕES:
     const handleQrCodeConnect = () => {
         setIsWhatsappModalOpen(false);
         setWhatsappStatus('connected');
+        toast.success('WhatsApp conectado com sucesso!');
     };
-
 
     const handleWhatsappDisconnect = () => {
         setWhatsappStatus('disconnected');
         setApiUrl('');
         setApiKey('');
+        toast.success('WhatsApp desconectado!');
     };
-
-
 
     return (
         <div className="space-y-8">
             <h2 className="text-3xl font-bold text-gray-800">IA & Configurações</h2>
-
 
             <SettingsCard title="Integração com WhatsApp" icon={ICONS.whatsapp}>
                 <div>
@@ -261,7 +192,6 @@ INSTRUÇÕES:
                         <option value="evolution">Evolution API (Não Oficial)</option>
                     </select>
                 </div>
-
 
                 <div className="mt-4 border-t pt-4">
                     {apiType === 'evolution' && (
@@ -297,7 +227,6 @@ INSTRUÇÕES:
                 </div>
             </SettingsCard>
 
-
              <SettingsCard title="Configuração do Chatbot de IA" icon={ICONS.robot}>
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                     <div className="space-y-6">
@@ -306,6 +235,7 @@ INSTRUÇÕES:
                              <select value={aiModel} onChange={e => setAiModel(e.target.value)} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm">
                                 <option value="gemini-1.5-flash">Google Gemini 1.5 Flash</option>
                                 <option value="gemini-1.5-pro">Google Gemini 1.5 Pro</option>
+                                <option value="gemini-2.0-flash">Google Gemini 2.0 Flash</option>
                             </select>
                         </div>
                         <div>
@@ -320,10 +250,6 @@ INSTRUÇÕES:
                              ></textarea>
                              <p className="mt-2 text-xs text-gray-500">Dica: Dê personalidade ao seu bot. Defina como ele deve saudar, se ele deve ser formal ou informal, etc.</p>
                         </div>
-<<<<<<< HEAD
-                         <button onClick={handleSaveSettings} className="w-full bg-primary text-white font-bold py-2 px-4 rounded-lg shadow-md hover:bg-primary-hover transition-colors">
-                            Salvar Configurações de IA
-=======
                          <button 
                             onClick={handleSaveAISettings}
                             disabled={saveStatus === 'saving'}
@@ -344,7 +270,6 @@ INSTRUÇÕES:
                     </div>
                 </div>
             </SettingsCard>
-
 
             <SettingsCard title="Permissões de Usuário" icon={ICONS.users}>
                 <div className="overflow-x-auto">
@@ -398,7 +323,6 @@ INSTRUÇÕES:
                 <div className="text-center">
                     <p className="text-gray-600 mb-4">Escaneie o QR Code com o seu celular para conectar sua conta do WhatsApp.</p>
                     <div className="bg-gray-100 p-4 rounded-lg inline-block">
-                        {/* Placeholder for QR Code */}
                         <img src="https://quickchart.io/qr?text=https://interativix.com/connect&size=200" alt="QR Code" />
                     </div>
                     <div className="mt-6">
