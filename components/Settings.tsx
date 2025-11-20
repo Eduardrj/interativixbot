@@ -1,10 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { User, UserRole, AppointmentStatus } from '../types';
+import { User, UserRole } from '../types';
 import { ICONS } from '../constants';
 import Modal from './Modal';
-import toast from 'react-hot-toast';
 import { GoogleGenAI } from "@google/genai";
-import { useAppointments, mockServices, mockAttendants } from '../contexts/AppointmentsContext';
 
 const initialUsers: User[] = [
   { id: 'u1', name: 'Ana Silva', email: 'ana@example.com', role: UserRole.Atendente, avatarUrl: 'https://ui-avatars.com/api/?name=Ana+Silva&background=8B5CF6&color=fff' },
@@ -12,27 +10,28 @@ const initialUsers: User[] = [
   { id: 'u3', name: 'Admin', email: 'admin@interativix.com', role: UserRole.Administrador, avatarUrl: 'https://ui-avatars.com/api/?name=Admin&background=F97316&color=fff' },
 ];
 
-
 const SettingsCard: React.FC<{title: string; icon?: React.ReactNode; children: React.ReactNode}> = ({title, icon, children}) => (
     <div className="bg-white p-6 rounded-2xl shadow-md">
         <h3 className="flex items-center text-xl font-bold text-gray-800 border-b pb-4 mb-4">
             {icon && <span className="mr-3 text-primary">{icon}</span>}
-                        </div>
-                         <button 
-                            onClick={handleSaveAISettings}
-                            disabled={saveStatus === 'saving'}
-                            className={`w-full font-bold py-2 px-4 rounded-lg shadow-md transition-colors ${
-                                saveStatus === 'saved' 
-                                    ? 'bg-success text-white' 
-                                    : 'bg-primary text-white hover:bg-primary-hover disabled:bg-primary/50'
-                            }`}
-                        >
-                            {saveStatus === 'saving' && 'Salvando...'}
-                            {saveStatus === 'saved' && '✓ Configurações salvas!'}
-                            {saveStatus === 'idle' && 'Salvar Configurações de IA'}
-                        </button>
-                    </div>
+            {title}
+        </h3>
+        {children}
+    </div>
+);
 
+const ChatSandbox: React.FC<{systemPrompt: string, aiModel: string}> = ({ systemPrompt, aiModel }) => {
+    const [messages, setMessages] = useState<{sender: 'user'|'bot', text: string}[]>([
+        { sender: 'bot', text: 'Olá! Como posso te ajudar a agendar seu horário hoje?' }
+    ]);
+    const [input, setInput] = useState('');
+    const [isLoading, setIsLoading] = useState(false);
+    const messagesEndRef = useRef<HTMLDivElement>(null);
+
+    const scrollToBottom = () => {
+        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
+    }
+    useEffect(scrollToBottom, [messages]);
 
     const handleSend = async () => {
         if (!input.trim() || isLoading) return;
@@ -44,40 +43,33 @@ const SettingsCard: React.FC<{title: string; icon?: React.ReactNode; children: R
         setIsLoading(true);
 
         try {
-            const apiKey = process.env.GEMINI_API_KEY;
-            if (!apiKey) {
-                throw new Error("Chave da API Gemini não encontrada. Verifique o arquivo .env.local e reinicie o servidor.");
+            const response = await fetch('/api/chat', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    history: messages,
+                    prompt: input,
+                    systemInstruction: systemPrompt,
+                    model: aiModel
+                })
+            });
+
+            if (!response.ok) {
+                throw new Error(`API error: ${response.statusText}`);
             }
 
-            const genAIClient = new GoogleGenAI(apiKey);
-
-            const modelInstance = genAIClient.getGenerativeModel({
-                model: aiModel,
-                systemInstruction: systemPrompt,
-            });
-
-            const chat = modelInstance.startChat({
-                history: messages.map(msg => ({
-                    role: msg.sender === 'user' ? 'user' : 'model',
-                    parts: [{ text: msg.text }],
-                })),
-            });
-
-            const result = await chat.sendMessage(input);
-            const response = result.response;
-            const replyText = response.text();
-
-            setMessages([...newMessages, { sender: 'bot' as 'bot', text: replyText }]);
+            const data = await response.json();
+            setMessages([...newMessages, { sender: 'bot' as 'bot', text: data.reply }]);
 
         } catch (error) {
             console.error("Failed to get AI response:", error);
-            const friendlyMessage = error instanceof Error ? error.message : 'Não foi possível conectar.';
-            setMessages([...newMessages, { sender: 'bot' as 'bot', text: `Desculpe, ocorreu um erro: ${friendlyMessage}` }]);
+            setMessages([...newMessages, { sender: 'bot' as 'bot', text: 'Desculpe, não consegui me conectar. Tente novamente mais tarde.' }]);
         } finally {
             setIsLoading(false);
         }
     };
-
 
     return (
         <div className="border rounded-lg flex flex-col h-96">
@@ -122,53 +114,33 @@ const SettingsCard: React.FC<{title: string; icon?: React.ReactNode; children: R
     )
 }
 
-
 const Settings: React.FC = () => {
     const [users, setUsers] = useState(initialUsers);
     const [aiModel, setAiModel] = useState(() => localStorage.getItem('aiModel') || 'gemini-2.5-pro');
-    const [systemPrompt, setSystemPrompt] = useState(() => localStorage.getItem('systemPrompt') || `Você é um assistente de agendamento para a plataforma Interativix-bot.
-
-INSTRUÇÕES:
-1. Saudação: Inicie cumprimentando o usuário de forma cordial e profissional.
-2. Informações necessárias: Pergunte ao usuário (um de cada vez):
-   - Nome completo
-   - Número de telefone
-   - Qual serviço deseja (Corte de Cabelo, Manicure, Limpeza de Pele)
-   - Data preferida (em formato DD/MM/YYYY)
-   - Horário preferido (em formato HH:MM)
-   - Profissional (se tiver preferência)
-
-3. Confirmação: Após coletar todas as informações, revise-as com o usuário.
-
-4. Agendamento confirmado: Quando o usuário confirmar o agendamento, responda com JSON estruturado assim:
-```json
-{
-  "action": "CREATE_APPOINTMENT",
-  "clientName": "Nome do Cliente",
-  "clientPhone": "11 98765-4321",
-  "service": "Corte de Cabelo",
-  "date": "17/11/2025",
-  "time": "14:30",
-  "professional": "Ana Silva"
-}
-```
-
-5. Tom: Seja sempre cordial, objetivo e profissional.`);
+    const [systemPrompt, setSystemPrompt] = useState(() => localStorage.getItem('systemPrompt') || "Você é um assistente de agendamento para a plataforma Interativix-bot. Pergunte ao usuário qual serviço deseja, preferências de profissional, data e horário. Verifique disponibilidade, confirme dados do cliente e finalize o agendamento. Seja cordial e objetivo.");
     const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
+    
     const [whatsappStatus, setWhatsappStatus] = useState<'connected' | 'disconnected'>('disconnected');
     const [isWhatsappModalOpen, setIsWhatsappModalOpen] = useState(false);
     const [apiType, setApiType] = useState<'official' | 'evolution'>('official');
     const [apiUrl, setApiUrl] = useState('');
     const [apiKey, setApiKey] = useState('');
 
+
+    const handleRoleChange = (userId: string, newRole: UserRole) => {
+        setUsers(users.map(user => user.id === userId ? { ...user, role: newRole } : user));
+    };
+
     const handleSaveAISettings = async () => {
         setSaveStatus('saving');
         try {
             // Simula um delay de processamento
             await new Promise(resolve => setTimeout(resolve, 500));
+            
             // Salva no localStorage
             localStorage.setItem('aiModel', aiModel);
             localStorage.setItem('systemPrompt', systemPrompt);
+            
             setSaveStatus('saved');
             setTimeout(() => setSaveStatus('idle'), 3000);
             console.log('Configurações de IA salvas com sucesso');
@@ -176,10 +148,6 @@ INSTRUÇÕES:
             console.error('Erro ao salvar configurações:', error);
             setSaveStatus('idle');
         }
-    };
-
-    const handleRoleChange = (userId: string, newRole: UserRole) => {
-        setUsers(users.map(user => user.id === userId ? { ...user, role: newRole } : user));
     };
 
     const handleWhatsappConnect = () => {
@@ -201,7 +169,6 @@ INSTRUÇÕES:
         setWhatsappStatus('connected');
     };
 
-
     const handleWhatsappDisconnect = () => {
         setWhatsappStatus('disconnected');
         setApiUrl('');
@@ -209,11 +176,9 @@ INSTRUÇÕES:
     };
 
 
-
     return (
         <div className="space-y-8">
             <h2 className="text-3xl font-bold text-gray-800">IA & Configurações</h2>
-
 
             <SettingsCard title="Integração com WhatsApp" icon={ICONS.whatsapp}>
                 <div>
@@ -223,7 +188,6 @@ INSTRUÇÕES:
                         <option value="evolution">Evolution API (Não Oficial)</option>
                     </select>
                 </div>
-
 
                 <div className="mt-4 border-t pt-4">
                     {apiType === 'evolution' && (
@@ -259,15 +223,14 @@ INSTRUÇÕES:
                 </div>
             </SettingsCard>
 
-
              <SettingsCard title="Configuração do Chatbot de IA" icon={ICONS.robot}>
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                     <div className="space-y-6">
                          <div>
                             <label className="block text-sm font-medium text-gray-700">Modelo de IA</label>
                              <select value={aiModel} onChange={e => setAiModel(e.target.value)} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm">
-                                <option value="gemini-1.5-flash">Google Gemini 1.5 Flash</option>
-                                <option value="gemini-1.5-pro">Google Gemini 1.5 Pro</option>
+                                <option value="gemini-2.5-flash">Google Gemini 2.5 Flash</option>
+                                <option value="gemini-2.5-pro">Google Gemini 2.5 Pro</option>
                             </select>
                         </div>
                         <div>
@@ -281,7 +244,7 @@ INSTRUÇÕES:
                                 placeholder="Descreva o comportamento do seu assistente de IA aqui..."
                              ></textarea>
                              <p className="mt-2 text-xs text-gray-500">Dica: Dê personalidade ao seu bot. Defina como ele deve saudar, se ele deve ser formal ou informal, etc.</p>
-                                </div>
+                        </div>
                          <button 
                             onClick={handleSaveAISettings}
                             disabled={saveStatus === 'saving'}
@@ -303,15 +266,14 @@ INSTRUÇÕES:
                 </div>
             </SettingsCard>
 
-
             <SettingsCard title="Permissões de Usuário" icon={ICONS.users}>
                 <div className="overflow-x-auto">
                     <table className="min-w-full divide-y divide-gray-200">
                         <thead className="bg-gray-50">
                             <tr>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Usuário</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Permissão</th>
-                                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Ações</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Usuário</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">E-mail</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Permissão</th>
                             </tr>
                         </thead>
                         <tbody className="bg-white divide-y divide-gray-200">
@@ -319,18 +281,16 @@ INSTRUÇÕES:
                                 <tr key={user.id}>
                                     <td className="px-6 py-4 whitespace-nowrap">
                                         <div className="flex items-center">
-                                            <div className="flex-shrink-0 h-10 w-10">
-                                                <img className="h-10 w-10 rounded-full" src={user.avatarUrl} alt={user.name} />
-                                            </div>
+                                            <img className="h-10 w-10 rounded-full" src={user.avatarUrl} alt="" />
                                             <div className="ml-4">
                                                 <div className="text-sm font-medium text-gray-900">{user.name}</div>
-                                                <div className="text-sm text-gray-500">{user.email}</div>
                                             </div>
                                         </div>
                                     </td>
-                                    <td className="px-6 py-4 whitespace-nowrap">
-                                        <select
-                                            value={user.role}
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{user.email}</td>
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                        <select 
+                                            value={user.role} 
                                             onChange={(e) => handleRoleChange(user.id, e.target.value as UserRole)}
                                             className="rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm"
                                             disabled={user.role === UserRole.Administrador}
@@ -339,11 +299,6 @@ INSTRUÇÕES:
                                                 <option key={role} value={role}>{role}</option>
                                             ))}
                                         </select>
-                                    </td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                        <button className="text-red-600 hover:text-red-900 disabled:text-gray-400" disabled={user.role === UserRole.Administrador}>
-                                            Remover
-                                        </button>
                                     </td>
                                 </tr>
                             ))}
@@ -354,14 +309,23 @@ INSTRUÇÕES:
 
             <Modal isOpen={isWhatsappModalOpen} onClose={() => setIsWhatsappModalOpen(false)} title="Conectar WhatsApp">
                 <div className="text-center">
-                    <p className="text-gray-600 mb-4">Escaneie o QR Code com o seu celular para conectar sua conta do WhatsApp.</p>
+                    <p className="text-gray-600 mb-4">Escaneie o QR Code abaixo com o seu celular para conectar sua conta do WhatsApp.</p>
                     <div className="bg-gray-100 p-4 rounded-lg inline-block">
                         {/* Placeholder for QR Code */}
-                        <img src="https://quickchart.io/qr?text=https://interativix.com/connect&size=200" alt="QR Code" />
+                        <svg className="w-48 h-48 mx-auto" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path fillRule="evenodd" clipRule="evenodd" d="M0 0H70V70H0V0ZM10 10V60H60V10H10Z" fill="black"/>
+                            <path fillRule="evenodd" clipRule="evenodd" d="M25 25H45V45H25V25Z" fill="black"/>
+                            <path fillRule="evenodd" clipRule="evenodd" d="M130 0H200V70H130V0ZM140 10V60H190V10H140Z" fill="black"/>
+                            <path d="M155 25H175V45H155V25Z" fill="black"/>
+                            <path fillRule="evenodd" clipRule="evenodd" d="M0 130H70V200H0V130ZM10 140V190H60V140H10Z" fill="black"/>
+                            <path d="M25 155H45V175H25V155Z" fill="black"/>
+                            <path d="M95 10H105V20H95V10ZM115 10H125V20H115V10ZM95 30H105V40H95V30ZM115 30H125V40H115V30ZM95 50H105V60H95V50ZM115 50H125V60H115V50ZM95 70H105V80H95V70ZM115 70H125V80H115V70ZM95 90H105V100H95V90ZM115 90H125V100H115V90ZM95 110H105V120H95V110ZM115 110H125V120H115V110ZM95 130H105V140H95V130ZM115 130H125V140H115V130ZM95 150H105V160H95V150ZM115 150H125V160H115V150ZM95 170H105V180H95V170ZM115 170H125V180H115V170ZM95 190H105V200H95V190ZM115 190H125V200H115V190ZM10 95H20V105H10V95ZM30 95H40V105H30V95ZM50 95H60V105H50V95ZM70 95H80V105H70V95ZM130 95H140V105H130V95ZM150 95H160V105H150V95ZM170 95H180V105H170V95ZM190 95H200V105H190V95Z" fill="black"/>
+                        </svg>
                     </div>
+                    <p className="text-xs text-gray-500 mt-4">1. Abra o WhatsApp no seu celular.<br/>2. Toque em Mais opções {'>'} Aparelhos conectados.<br/>3. Toque em Conectar um aparelho.<br/>4. Aponte seu celular para esta tela.</p>
                     <div className="mt-6">
-                        <button onClick={handleQrCodeConnect} className="w-full bg-success text-white font-bold py-2 px-4 rounded-lg shadow-md hover:bg-green-600 transition-colors">
-                            Já escaneei, conectar!
+                        <button onClick={handleQrCodeConnect} className="bg-success text-white font-bold py-2 px-6 rounded-lg shadow-md hover:bg-green-600 transition-colors">
+                            Simular Conexão
                         </button>
                     </div>
                 </div>
