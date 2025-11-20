@@ -131,7 +131,6 @@ const ChatSandbox: React.FC<{systemPrompt: string, aiModel: string}> = ({ system
 
 const Settings: React.FC = () => {
     const [users, setUsers] = useState(initialUsers);
-<<<<<<< HEAD
     const [aiModel, setAiModel] = useState(() => localStorage.getItem('aiModel') || 'gemini-2.5-pro');
     const [systemPrompt, setSystemPrompt] = useState(() => localStorage.getItem('systemPrompt') || `Você é um assistente de agendamento para a plataforma Interativix-bot.
 
@@ -148,7 +147,7 @@ INSTRUÇÕES:
 3. Confirmação: Após coletar todas as informações, revise-as com o usuário.
 
 4. Agendamento confirmado: Quando o usuário confirmar o agendamento, responda com JSON estruturado assim:
-\`\`\`json
+```json
 {
   "action": "CREATE_APPOINTMENT",
   "clientName": "Nome do Cliente",
@@ -158,33 +157,24 @@ INSTRUÇÕES:
   "time": "14:30",
   "professional": "Ana Silva"
 }
-\`\`\`
+```
 
 5. Tom: Seja sempre cordial, objetivo e profissional.`);
     const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
-    
     const [whatsappStatus, setWhatsappStatus] = useState<'connected' | 'disconnected'>('disconnected');
     const [isWhatsappModalOpen, setIsWhatsappModalOpen] = useState(false);
     const [apiType, setApiType] = useState<'official' | 'evolution'>('official');
     const [apiUrl, setApiUrl] = useState('');
     const [apiKey, setApiKey] = useState('');
 
-    const handleSaveSettings = () => {
-        localStorage.setItem('aiModel', aiModel);
-        localStorage.setItem('systemPrompt', systemPrompt);
-        toast.success('Configurações de IA salvas com sucesso!');
-    };
-
     const handleSaveAISettings = async () => {
         setSaveStatus('saving');
         try {
             // Simula um delay de processamento
             await new Promise(resolve => setTimeout(resolve, 500));
-            
             // Salva no localStorage
             localStorage.setItem('aiModel', aiModel);
             localStorage.setItem('systemPrompt', systemPrompt);
-            
             setSaveStatus('saved');
             setTimeout(() => setSaveStatus('idle'), 3000);
             console.log('Configurações de IA salvas com sucesso');
@@ -197,28 +187,6 @@ INSTRUÇÕES:
     const handleRoleChange = (userId: string, newRole: UserRole) => {
         setUsers(users.map(user => user.id === userId ? { ...user, role: newRole } : user));
     };
-
-<<<<<<< HEAD
-=======
-    const handleSaveAISettings = async () => {
-        setSaveStatus('saving');
-        try {
-            // Simula um delay de processamento
-            await new Promise(resolve => setTimeout(resolve, 500));
-            
-            // Salva no localStorage
-            localStorage.setItem('aiModel', aiModel);
-            localStorage.setItem('systemPrompt', systemPrompt);
-            
-            setSaveStatus('saved');
-            setTimeout(() => setSaveStatus('idle'), 3000);
-            console.log('Configurações de IA salvas com sucesso');
-        } catch (error) {
-            console.error('Erro ao salvar configurações:', error);
-            setSaveStatus('idle');
-        }
-    };
->>>>>>> nova-branch
 
     const handleWhatsappConnect = () => {
         if (apiType === 'official') {
