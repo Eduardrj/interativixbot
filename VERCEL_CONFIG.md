@@ -14,7 +14,7 @@
 Adicione esta variável no Vercel Dashboard:
 
 **Nome:** `VITE_PERPLEXITY_API_KEY`  
-**Valor:** `pplx-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx` (sua chave)  
+**Valor:** `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`  
 **Ambientes:** ✅ Production, ✅ Preview, ✅ Development
 
 ## 🚀 Como Adicionar
@@ -23,7 +23,7 @@ Adicione esta variável no Vercel Dashboard:
 2. Clique em **"Add New"**
 3. Preencha:
    - **Key:** `VITE_PERPLEXITY_API_KEY`
-   - **Value:** `pplx-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx` (sua chave Perplexity)
+   - **Value:** `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`
    - **Environments:** Marque todos (Production, Preview, Development)
 4. Clique em **"Save"**
 
