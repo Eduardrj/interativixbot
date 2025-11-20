@@ -1,21 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import KanbanBoard from './KanbanBoard';
 import Modal from './Modal';
-import { Appointment, AppointmentStatus, Service, User, UserRole } from '../types';
+import { Appointment, AppointmentStatus } from '../types';
 import { ICONS } from '../constants';
 import { useAppointments, mockServices, mockAttendants } from '../contexts/AppointmentsContext';
-
-// Mock Data
-const mockServices: Service[] = [
-  { id: '1', name: 'Corte de Cabelo', duration: 45, price: 50.0 },
-  { id: '2', name: 'Manicure', duration: 60, price: 40.0 },
-  { id: '3', name: 'Limpeza de Pele', duration: 90, price: 120.0 },
-];
-
-const mockAttendants: User[] = [
-  { id: 'u1', name: 'Ana Silva', email: 'ana@example.com', role: UserRole.Atendente, avatarUrl: 'https://ui-avatars.com/api/?name=Ana+Silva&background=8B5CF6&color=fff' },
-  { id: 'u2', name: 'Bruno Costa', email: 'bruno@example.com', role: UserRole.Atendente, avatarUrl: 'https://ui-avatars.com/api/?name=Bruno+Costa&background=3B82F6&color=fff' },
-];
 
 const initialAppointments: Appointment[] = [
   { id: 'A1', clientName: 'Carlos Pereira', clientPhone: '(11) 98765-4321', service: mockServices[0], startTime: new Date(new Date().setHours(10, 0, 0, 0)), endTime: new Date(new Date().setHours(10, 45, 0, 0)), status: AppointmentStatus.Pendente, attendant: mockAttendants[0], source: 'admin' },
