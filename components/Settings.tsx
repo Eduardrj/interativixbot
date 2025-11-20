@@ -17,27 +17,21 @@ const SettingsCard: React.FC<{title: string; icon?: React.ReactNode; children: R
     <div className="bg-white p-6 rounded-2xl shadow-md">
         <h3 className="flex items-center text-xl font-bold text-gray-800 border-b pb-4 mb-4">
             {icon && <span className="mr-3 text-primary">{icon}</span>}
-            {title}
-        </h3>
-        {children}
-    </div>
-);
-
-
-const ChatSandbox: React.FC<{systemPrompt: string, aiModel: string}> = ({ systemPrompt, aiModel }) => {
-    const { addAppointment } = useAppointments();
-    const [messages, setMessages] = useState<{sender: 'user'|'bot', text: string}[]>([
-        { sender: 'bot', text: 'Olá! Como posso te ajudar a agendar seu horário hoje?' }
-    ]);
-    const [input, setInput] = useState('');
-    const [isLoading, setIsLoading] = useState(false);
-    const messagesEndRef = useRef<HTMLDivElement>(null);
-
-
-    const scrollToBottom = () => {
-        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
-    }
-    useEffect(scrollToBottom, [messages]);
+                        </div>
+                         <button 
+                            onClick={handleSaveAISettings}
+                            disabled={saveStatus === 'saving'}
+                            className={`w-full font-bold py-2 px-4 rounded-lg shadow-md transition-colors ${
+                                saveStatus === 'saved' 
+                                    ? 'bg-success text-white' 
+                                    : 'bg-primary text-white hover:bg-primary-hover disabled:bg-primary/50'
+                            }`}
+                        >
+                            {saveStatus === 'saving' && 'Salvando...'}
+                            {saveStatus === 'saved' && '✓ Configurações salvas!'}
+                            {saveStatus === 'idle' && 'Salvar Configurações de IA'}
+                        </button>
+                    </div>
 
 
     const handleSend = async () => {

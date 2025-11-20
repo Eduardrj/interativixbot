@@ -1,14 +1,8 @@
-```typescript
-// @ts-ignore
 // @ts-ignore
 import { IncomingMessage, ServerResponse } from 'http';
-
 // Perplexity API integration for interativixbot
 // Uses the pplx-api REST endpoint compatible with OpenAI's interface
-
-export default async function handler(
-	request: IncomingMessage & { body?: any },
-	response: ServerResponse
+}
 ) {
 	// CORS Headers
 	response.setHeader('Access-Control-Allow-Credentials', 'true');
