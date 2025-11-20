@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { User, UserRole } from '../types';
 import { ICONS } from '../constants';
 import Modal from './Modal';
-import { GoogleGenAI } from "@google/genai";
+import { sendChatMessage } from '../lib/chatClient';
 
 const initialUsers: User[] = [
   { id: 'u1', name: 'Ana Silva', email: 'ana@example.com', role: UserRole.Atendente, avatarUrl: 'https://ui-avatars.com/api/?name=Ana+Silva&background=8B5CF6&color=fff' },
@@ -43,29 +43,19 @@ const ChatSandbox: React.FC<{systemPrompt: string, aiModel: string}> = ({ system
         setIsLoading(true);
 
         try {
-            const response = await fetch('/api/chat', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    history: messages,
-                    prompt: input,
-                    systemInstruction: systemPrompt,
-                    model: aiModel
-                })
+            const reply = await sendChatMessage({
+                history: messages,
+                prompt: input,
+                systemInstruction: systemPrompt,
+                model: aiModel
             });
 
-            if (!response.ok) {
-                throw new Error(`API error: ${response.statusText}`);
-            }
+            setMessages([...newMessages, { sender: 'bot' as 'bot', text: reply }]);
 
-            const data = await response.json();
-            setMessages([...newMessages, { sender: 'bot' as 'bot', text: data.reply }]);
-
-        } catch (error) {
+        } catch (error: any) {
             console.error("Failed to get AI response:", error);
-            setMessages([...newMessages, { sender: 'bot' as 'bot', text: 'Desculpe, não consegui me conectar. Tente novamente mais tarde.' }]);
+            const errorMessage = error.message || 'Desculpe, não consegui me conectar. Tente novamente mais tarde.';
+            setMessages([...newMessages, { sender: 'bot' as 'bot', text: `❌ Erro: ${errorMessage}` }]);
         } finally {
             setIsLoading(false);
         }
@@ -231,7 +221,14 @@ const Settings: React.FC = () => {
                              <select value={aiModel} onChange={e => setAiModel(e.target.value)} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm">
                                 <option value="gemini-2.5-flash">Google Gemini 2.5 Flash</option>
                                 <option value="gemini-2.5-pro">Google Gemini 2.5 Pro</option>
+                                <option value="perplexity-sonar">Perplexity Sonar</option>
+                                <option value="perplexity-sonar-pro">Perplexity Sonar Pro</option>
                             </select>
+                            <p className="mt-2 text-xs text-gray-500">
+                                <strong>Gemini:</strong> Rápido e econômico (Flash) ou mais preciso (Pro)
+                                <br />
+                                <strong>Perplexity:</strong> Busca em tempo real e respostas atualizadas
+                            </p>
                         </div>
                         <div>
                             <label htmlFor="system-prompt" className="block text-sm font-medium text-gray-700">Prompt do Sistema</label>
