@@ -22,3 +22,6 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Preserve original chat implementation (Gemini)
+api/chat-gemini.ts

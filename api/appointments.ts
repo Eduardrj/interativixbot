@@ -1,4 +1,5 @@
 import { IncomingMessage, ServerResponse } from 'http';
+import { supabase } from '../lib/supabaseClient';
 
 interface AppointmentData {
     clientName: string;
@@ -42,7 +43,7 @@ export default async function handler(
             body += chunk.toString();
         }
 
-        const appointmentData: AppointmentData = JSON.parse(body);
+        const appointmentData: AppointmentData & { userId?: string } = JSON.parse(body);
 
         // Validação básica
         if (!appointmentData.clientName || !appointmentData.clientPhone || !appointmentData.service || !appointmentData.date || !appointmentData.time) {
@@ -51,20 +52,44 @@ export default async function handler(
             return;
         }
 
-        // Criar agendamento
-        const newAppointment = {
-            id: `A${Date.now()}`,
-            clientName: appointmentData.clientName,
-            clientPhone: appointmentData.clientPhone,
+        // Criar agendamento - tentar salvar no Supabase se configurado
+        const startTime = new Date(`${appointmentData.date}T${appointmentData.time}`);
+        const endTime = new Date(startTime);
+
+        const dbRecord = {
+            client_name: appointmentData.clientName,
+            client_phone: appointmentData.clientPhone,
             service: appointmentData.service,
-            startTime: new Date(`${appointmentData.date}T${appointmentData.time}`),
-            endTime: new Date(`${appointmentData.date}T${appointmentData.time}`), // será calculado no frontend
-            status: 'Pendente',
-            attendant: appointmentData.attendant || 'Não atribuído',
+            start_time: startTime.toISOString(),
+            end_time: endTime.toISOString(),
+            status: 'pendente',
+            attendant: appointmentData.attendant || null,
             source: 'whatsapp',
-            createdAt: new Date()
+            user_id: appointmentData.userId || null
         };
 
+        // Se Supabase estiver configurado, tentar inserir; caso contrário, usar mock local
+        if ((supabase as any) && process.env.VITE_SUPABASE_URL) {
+            const { data, error } = await supabase.from('appointments').insert([dbRecord]).select().single();
+            if (error) {
+                console.error('Supabase insert error:', error);
+                response.statusCode = 500;
+                response.end(JSON.stringify({ error: 'Failed to create appointment in DB' }));
+                return;
+            }
+
+            response.statusCode = 201;
+            response.setHeader('Content-Type', 'application/json');
+            response.end(JSON.stringify({ success: true, appointment: data }));
+            return;
+        }
+
+        // Fallback: mock local storage
+        const newAppointment = {
+            id: `A${Date.now()}`,
+            ...dbRecord,
+            createdAt: new Date().toISOString()
+        };
         appointments.push(newAppointment);
 
         response.statusCode = 201;
