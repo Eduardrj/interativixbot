@@ -1,13 +1,6 @@
 {
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
-  "functions": {
-    "api/**/*.ts": {
-      "memory": 1024,
-      "maxDuration": 60,
-      "runtime": "nodejs20.x"
-    }
-  },
   "rewrites": [
     {
       "source": "/api/(.*)",
@@ -28,7 +21,7 @@
         },
         {
           "key": "Access-Control-Allow-Origin",
-          "value": "https://interativixbot.com.br"
+          "value": "*"
         },
         {
           "key": "Access-Control-Allow-Methods",
