@@ -30,9 +30,6 @@ async function sendGeminiMessage(options: ChatOptions): Promise<string> {
   
   const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
   
-  console.log('[Gemini] API Key presente:', !!apiKey);
-  console.log('[Gemini] Modelo:', model);
-  
   if (!apiKey || apiKey === 'sua-chave-gemini-aqui') {
     throw new Error('Chave da API do Gemini não configurada. Configure VITE_GEMINI_API_KEY no arquivo .env.local');
   }
@@ -42,7 +39,7 @@ async function sendGeminiMessage(options: ChatOptions): Promise<string> {
     const geminiModel = genAI.getGenerativeModel({ model });
 
     // Construir histórico para o Gemini
-    // Gemini requer que o histórico comece com 'user', então filtramos mensagens vazias ou começamos do primeiro 'user'
+    // Gemini requer que o histórico comece com 'user'
     let chatHistory = history.map(msg => ({
       role: msg.sender === 'user' ? 'user' : 'model',
       parts: [{ text: msg.text }],
@@ -52,10 +49,6 @@ async function sendGeminiMessage(options: ChatOptions): Promise<string> {
     if (chatHistory.length > 0 && chatHistory[0].role !== 'user') {
       chatHistory = chatHistory.slice(1);
     }
-
-    // Se o histórico tem número ímpar de mensagens (não termina com resposta do bot), está OK
-    // Gemini aceita histórico vazio também
-    console.log('[Gemini] Histórico:', chatHistory.length, 'mensagens');
 
     // Iniciar chat com histórico
     const chat = geminiModel.startChat({
@@ -72,17 +65,10 @@ async function sendGeminiMessage(options: ChatOptions): Promise<string> {
       : prompt;
 
     // Enviar mensagem e obter resposta
-    console.log('[Gemini] Enviando prompt...');
     const result = await chat.sendMessage(finalPrompt);
-    const responseText = result.response.text();
-    console.log('[Gemini] Resposta recebida:', responseText.substring(0, 50) + '...');
-    return responseText;
+    return result.response.text();
     
   } catch (error: any) {
-    console.error('[Gemini] Erro completo:', error);
-    console.error('[Gemini] Mensagem:', error.message);
-    console.error('[Gemini] Stack:', error.stack);
-    
     if (error.message?.includes('API_KEY_INVALID') || error.message?.includes('API key not valid')) {
       throw new Error('Chave da API do Gemini inválida. Verifique sua configuração.');
     }
@@ -100,11 +86,14 @@ async function sendPerplexityMessage(options: ChatOptions): Promise<string> {
   
   const apiKey = import.meta.env.VITE_PERPLEXITY_API_KEY;
   
-  console.log('[Perplexity] API Key presente:', !!apiKey);
-  console.log('[Perplexity] Modelo:', model);
-  
   if (!apiKey || apiKey === 'sua-chave-perplexity-aqui') {
-    throw new Error('Chave da API do Perplexity não configurada. Configure VITE_PERPLEXITY_API_KEY no arquivo .env.local');
+    throw new Error('Chave da API do Perplexity não configurada.');
+  }
+
+  // Em desenvolvimento (Codespaces), a API do Perplexity não funciona por CORS
+  // Retornar mensagem explicativa
+  if (import.meta.env.DEV) {
+    throw new Error('Perplexity não disponível em desenvolvimento local devido a restrições CORS. Use Gemini ou faça deploy para produção.');
   }
 
   try {
@@ -132,66 +121,30 @@ async function sendPerplexityMessage(options: ChatOptions): Promise<string> {
       content: prompt
     });
 
-    console.log('[Perplexity] Total de mensagens:', messages.length);
-
-    const requestBody = {
-      model: model.replace('perplexity-', ''),
-      messages,
-      temperature: 0.7,
-      max_tokens: 2048,
-    };
-
-    console.log('[Perplexity] Usando proxy para evitar CORS');
-
-    // Usar um proxy simples para evitar CORS
-    // Em desenvolvimento, vamos usar o AllOrigins como proxy público
-    const proxyUrl = 'https://api.allorigins.win/raw?url=';
-    const apiUrl = encodeURIComponent('https://api.perplexity.ai/chat/completions');
-    
-    // Como o proxy não suporta headers customizados, vamos tentar uma alternativa:
-    // Usar a API diretamente e capturar o erro de CORS
-    console.log('[Perplexity] Tentando chamada direta (pode falhar por CORS)...');
-    
-    const response = await fetch('https://api.perplexity.ai/chat/completions', {
+    const response = await fetch('/api/chat-perplexity', {
       method: 'POST',
-      mode: 'cors',
       headers: {
-        'Authorization': `Bearer ${apiKey}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(requestBody),
-    }).catch(async (fetchError) => {
-      console.error('[Perplexity] Erro de CORS detectado:', fetchError);
-      throw new Error('A API do Perplexity não pode ser chamada diretamente do navegador devido a restrições CORS. Use o modelo Gemini ou configure um proxy/API backend.');
+      body: JSON.stringify({
+        model: model.replace('perplexity-', ''),
+        messages,
+        temperature: 0.7,
+        max_tokens: 2048,
+      }),
     });
 
-    console.log('[Perplexity] Response status:', response.status);
-    
-    const responseText = await response.text();
-    console.log('[Perplexity] Response text:', responseText.substring(0, 200));
-
     if (!response.ok) {
-      let errorData: any = {};
-      try {
-        errorData = JSON.parse(responseText);
-      } catch (e) {
-        console.error('[Perplexity] Failed to parse error response');
-      }
-      throw new Error(errorData.error?.message || `HTTP ${response.status}: ${responseText}`);
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.error || `HTTP ${response.status}`);
     }
 
-    const data = JSON.parse(responseText);
-    const replyText = data.choices[0]?.message?.content || 'Sem resposta';
-    console.log('[Perplexity] Resposta recebida:', replyText.substring(0, 50) + '...');
-    return replyText;
+    const data = await response.json();
+    return data.reply || 'Sem resposta';
     
   } catch (error: any) {
-    console.error('[Perplexity] Erro completo:', error);
-    console.error('[Perplexity] Mensagem:', error.message);
-    console.error('[Perplexity] Stack:', error.stack);
-    
     if (error.message?.includes('401') || error.message?.includes('Unauthorized')) {
-      throw new Error('Chave da API do Perplexity inválida. Verifique sua configuração.');
+      throw new Error('Chave da API do Perplexity inválida.');
     }
     
     if (error.message?.includes('429') || error.message?.includes('rate limit')) {
