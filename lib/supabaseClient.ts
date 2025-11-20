@@ -1,8 +1,19 @@
 import { createClient } from '@supabase/supabase-js';
 
-// Estas variáveis devem estar no arquivo .env.local
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
-const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
+function getEnvVar(name: string): string | undefined {
+    if (typeof import.meta !== 'undefined' && (import.meta as any).env && (import.meta as any).env[name]) {
+        return (import.meta as any).env[name];
+    }
+
+    if (typeof process !== 'undefined' && process.env && process.env[name]) {
+        return process.env[name];
+    }
+
+    return undefined;
+}
+
+const supabaseUrl = getEnvVar('VITE_SUPABASE_URL') || '';
+const supabaseKey = getEnvVar('VITE_SUPABASE_ANON_KEY') || '';
 
 if (!supabaseUrl || !supabaseKey) {
     console.warn('⚠️ Supabase credentials not found. Please configure VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY in .env.local');
