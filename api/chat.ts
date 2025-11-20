@@ -1,103 +1,168 @@
+// @ts-ignore
 import { IncomingMessage, ServerResponse } from 'http';
+import { verifySupabaseToken, extractBearerToken } from '../lib/auth.js';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 
-// Handler para Perplexity (substitui a implementação do Gemini).
-// Usa a variável de ambiente `PERPLEXITY_API_KEY` como prioridade.
 export default async function handler(
-    request: IncomingMessage & { body?: any },
-    response: ServerResponse
+ request: IncomingMessage & { body?: any },
+ response: ServerResponse
 ) {
-    response.setHeader('Access-Control-Allow-Credentials', 'true');
-    response.setHeader('Access-Control-Allow-Origin', process.env.CORS_ORIGIN || 'https://interativixbot.com.br');
-    response.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
-    response.setHeader('Access-Control-Allow-Headers', 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version, Authorization');
+ // CORS Headers
+ response.setHeader('Access-Control-Allow-Credentials', 'true');
+ response.setHeader('Access-Control-Allow-Origin', process.env.CORS_ORIGIN || 'https://interativixbot.com.br');
+ response.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
+ response.setHeader('Access-Control-Allow-Headers', 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version, Authorization');
+ 
+ if (request.method === 'OPTIONS') {
+ response.statusCode = 200;
+ response.end();
+ return;
+ }
+ 
+ if (request.method !== 'POST') {
+ response.statusCode = 405;
+ response.end(JSON.stringify({ error: 'Method not allowed' }));
+ return;
+ }
 
-    if (request.method === 'OPTIONS') {
-        response.statusCode = 200;
-        response.end();
-        return;
-    }
+ // Try multiple header keys and fallback to query param to be resilient behind proxies
+ try {
+     const headerNames = Object.keys(request.headers || {});
+     console.log('[chat] header keys:', headerNames.join(','));
+     console.log('[chat] request url:', request.url);
+ } catch {}
+ const headersAny = request.headers as any;
+ const possibleAuthHeader =
+     headersAny?.authorization ||
+     headersAny?.Authorization ||
+     headersAny?.['x-authorization'] ||
+     headersAny?.['x-supabase-auth'] ||
+     undefined;
+    try { console.log('[chat] auth header present:', !!possibleAuthHeader); } catch {}
 
-    if (request.method !== 'POST') {
-        response.statusCode = 405;
-        response.end(JSON.stringify({ error: 'Method not allowed' }));
-        return;
-    }
+ let token = extractBearerToken(possibleAuthHeader as string | undefined);
 
-    try {
-        let body = '';
-        for await (const chunk of request) body += chunk.toString();
+ if (!token && request.url) {
+     try {
+         const host = (headersAny?.host as string) || 'interativixbot.com.br';
+         const url = new URL(request.url, `https://${host}`);
+         const qpToken = url.searchParams.get('access_token') || url.searchParams.get('token');
+         if (qpToken) token = qpToken;
+     } catch {}
+ }
+ 
 
-        let parsed;
-        try {
-            parsed = JSON.parse(body);
-        } catch (e) {
-            response.statusCode = 400;
-            response.end(JSON.stringify({ error: 'Invalid JSON' }));
-            return;
-        }
+ let userId: string;
+ 
+ try {
+ let body = '';
+ 
+ for await (const chunk of request) {
+ body += chunk.toString();
+ }
+ 
+ let parsedBody;
+ try {
+ parsedBody = JSON.parse(body);
+ } catch (e) {
+ console.error("Failed to parse JSON:", body);
+ response.statusCode = 400;
+ response.end(JSON.stringify({ error: 'Invalid JSON in request body' }));
+ return;
+ }
 
-        const { prompt, history = [], systemInstruction } = parsed;
-        if (!prompt) {
-            response.statusCode = 400;
-            response.end(JSON.stringify({ error: 'Prompt is required' }));
-            return;
-        }
+ // As a fallback, accept token from request body
+ if (!token) {
+     token = parsedBody?.accessToken || parsedBody?.token || null;
+ }
 
-        const apiKey = process.env.PERPLEXITY_API_KEY || process.env.PERPLEXITY_KEY;
-        if (!apiKey) {
-            response.statusCode = 500;
-            response.end(JSON.stringify({ error: 'Perplexity API key not configured (PERPLEXITY_API_KEY)' }));
-            return;
-        }
+ if (!token) {
+     response.statusCode = 401;
+     response.end(JSON.stringify({ error: 'Missing or invalid Authorization header. Please provide a valid JWT token.' }));
+     return;
+ }
 
-        // Construir payload básico para Perplexity: adaptável conforme API real
-        const payload = {
-            query: prompt,
-            // histórico e instruções podem ser usados se a API suportar
-            history,
-            systemInstruction: systemInstruction || 'Você é um assistente prestativo.'
-        };
+ try {
+     const verified = await verifySupabaseToken(token, process.env.VITE_SUPABASE_URL || '');
+     userId = verified.userId;
+ } catch (authError) {
+     console.error('Authentication failed:', authError);
+     response.statusCode = 401;
+     response.end(JSON.stringify({ error: 'Invalid or expired token' }));
+     return;
+ }
+ 
+ const { history = [], prompt, systemInstruction, model = 'gemini-1.5-flash' } = parsedBody;
+ 
+ if (!prompt) {
+ response.statusCode = 400;
+ response.end(JSON.stringify({ error: 'Prompt is required' }));
+ return;
+ }
+ 
+ const apiKey = process.env.VITE_GEMINI_API_KEY;
+ if (!apiKey) {
+ console.error("Gemini API key not found in environment variables");
+ response.statusCode = 500;
+ response.end(JSON.stringify({ error: 'API key not configured' }));
+ return;
+ }
+ 
+ try {
+ // Initialize Google Generative AI
+ const genAI = new GoogleGenerativeAI(apiKey);
+ const geminiModel = genAI.getGenerativeModel({ model: model });
 
-        try {
-            const res = await fetch('https://api.perplexity.ai/chat', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${apiKey}`
-                },
-                body: JSON.stringify(payload),
-            });
+ // Build conversation history for Gemini
+ const chatHistory = [];
+ 
+ history.forEach((msg: { sender: string; text: string }) => {
+ chatHistory.push({
+ role: msg.sender === 'user' ? 'user' : 'model',
+ parts: [{ text: msg.text }],
+ });
+ });
 
-            if (!res.ok) {
-                const text = await res.text();
-                console.error('Perplexity API error', res.status, text);
-                response.statusCode = res.status === 401 ? 502 : 502;
-                response.end(JSON.stringify({ error: 'AI service error', details: text }));
-                return;
-            }
+ // Start chat with history
+ const chat = geminiModel.startChat({
+ history: chatHistory,
+ generationConfig: {
+ temperature: 0.7,
+ maxOutputTokens: 1024,
+ },
+ systemInstruction: systemInstruction || 'Você é um assistente prestativo e educativo.',
+ });
 
-            const data = await res.json().catch(() => null);
-
-            // Tentar extrair um texto de resposta com abordagens seguras
-            let reply = null;
-            if (data) {
-                reply = data.answer || data.reply || data.text || JSON.stringify(data);
-            }
-
-            response.statusCode = 200;
-            response.setHeader('Content-Type', 'application/json');
-            response.end(JSON.stringify({ reply }));
-            return;
-        } catch (apiError) {
-            console.error('Error calling Perplexity API:', apiError);
-            response.statusCode = 502;
-            response.end(JSON.stringify({ error: 'Error connecting to Perplexity API' }));
-            return;
-        }
-
-    } catch (error) {
-        console.error('Error in /api/chat:', error);
-        response.statusCode = 500;
-        response.end(JSON.stringify({ error: 'Internal server error' }));
-    }
+ // Send message and get response
+ const result = await chat.sendMessage(prompt);
+ const replyText = result.response.text();
+ 
+ response.statusCode = 200;
+ response.setHeader('Content-Type', 'application/json');
+ response.end(JSON.stringify({ reply: replyText, userId }));
+ 
+ } catch (apiError: any) {
+ console.error("Error calling Gemini API:", apiError);
+ 
+ // Handle specific Gemini API errors
+ if (apiError.message?.includes('API_KEY_INVALID')) {
+     response.statusCode = 500;
+     response.end(JSON.stringify({ error: 'Invalid API key for AI service' }));
+     return;
+ }
+ 
+ if (apiError.message?.includes('Quota exceeded')) {
+     response.statusCode = 429;
+     response.end(JSON.stringify({ error: 'AI service quota exceeded. Please try again later.' }));
+     return;
+ }
+ 
+ response.statusCode = 502;
+ response.end(JSON.stringify({ error: 'Error connecting to AI service. Please try again later.' }));
+ }
+ } catch (error) {
+ console.error("Error in /api/chat:", error);
+ response.statusCode = 500;
+ response.end(JSON.stringify({ error: 'Failed to process chat message' }));
+ }
 }
