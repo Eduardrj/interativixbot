@@ -281,11 +281,7 @@ INSTRUÇÕES:
                                 placeholder="Descreva o comportamento do seu assistente de IA aqui..."
                              ></textarea>
                              <p className="mt-2 text-xs text-gray-500">Dica: Dê personalidade ao seu bot. Defina como ele deve saudar, se ele deve ser formal ou informal, etc.</p>
-                        </div>
-<<<<<<< HEAD
-                         <button onClick={handleSaveSettings} className="w-full bg-primary text-white font-bold py-2 px-4 rounded-lg shadow-md hover:bg-primary-hover transition-colors">
-                            Salvar Configurações de IA
-=======
+                                </div>
                          <button 
                             onClick={handleSaveAISettings}
                             disabled={saveStatus === 'saving'}
