@@ -13,25 +13,7 @@ CREATE TABLE IF NOT EXISTS public.companies (
     phone TEXT,
     email TEXT,
     address JSONB,
-    settings JSONB DEFAULT '{
-        "business_hours": {
-            "monday": {"open": "09:00", "close": "18:00"},
-            "tuesday": {"open": "09:00", "close": "18:00"},
-            "wednesday": {"open": "09:00", "close": "18:00"},
-            "thursday": {"open": "09:00", "close": "18:00"},
-            "friday": {"open": "09:00", "close": "18:00"},
-            "saturday": {"open": "09:00", "close": "13:00"},
-            "sunday": {"open": null, "close": null}
-        },
-        "notifications": {
-            "email": true,
-            "sms": true,
-            "whatsapp": true
-        },
-        "timezone": "America/Sao_Paulo",
-        "language": "pt-BR",
-        "currency": "BRL"
-    }'::jsonb,
+    settings JSONB DEFAULT '{"business_hours":{"monday":{"open":"09:00","close":"18:00"},"tuesday":{"open":"09:00","close":"18:00"},"wednesday":{"open":"09:00","close":"18:00"},"thursday":{"open":"09:00","close":"18:00"},"friday":{"open":"09:00","close":"18:00"},"saturday":{"open":"09:00","close":"13:00"},"sunday":{"open":null,"close":null}},"notifications":{"email":true,"sms":true,"whatsapp":true},"timezone":"America/Sao_Paulo","language":"pt-BR","currency":"BRL"}'::jsonb,
     plan TEXT DEFAULT 'free',
     active BOOLEAN DEFAULT TRUE,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
@@ -43,15 +25,7 @@ CREATE TABLE IF NOT EXISTS public.company_users (
     company_id UUID REFERENCES public.companies(id) ON DELETE CASCADE,
     user_id UUID REFERENCES public.users(id) ON DELETE CASCADE,
     role TEXT NOT NULL DEFAULT 'attendant',
-    permissions JSONB DEFAULT '{
-        "clients": ["create", "read", "update", "delete"],
-        "services": ["create", "read", "update", "delete"],
-        "appointments": ["create", "read", "update", "delete"],
-        "professionals": ["read"],
-        "financial": ["read"],
-        "reports": ["read"],
-        "settings": []
-    }'::jsonb,
+    permissions JSONB DEFAULT '{"clients":["create","read","update","delete"],"services":["create","read","update","delete"],"appointments":["create","read","update","delete"],"professionals":["read"],"financial":["read"],"reports":["read"],"settings":[]}'::jsonb,
     active BOOLEAN DEFAULT TRUE,
     joined_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     PRIMARY KEY (company_id, user_id)
