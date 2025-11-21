@@ -45,6 +45,18 @@ export const ClientsProvider: React.FC<{ children: ReactNode }> = ({ children })
           email: c.email,
           lastAppointment: c.last_appointment ? new Date(c.last_appointment) : undefined,
           consentLgpd: c.consent_lgpd,
+          status: c.status,
+          pipelineStage: c.pipeline_stage,
+          score: c.score,
+          source: c.source,
+          company: c.company,
+          position: c.position,
+          birthday: c.birthday ? new Date(c.birthday) : undefined,
+          address: c.address,
+          socialMedia: c.social_media,
+          notes: c.notes,
+          lastContactAt: c.last_contact_at ? new Date(c.last_contact_at) : undefined,
+          assignedTo: c.assigned_to,
         }));
 
         setClients(formattedClients);
@@ -93,6 +105,17 @@ export const ClientsProvider: React.FC<{ children: ReactNode }> = ({ children })
             email: clientData.email,
             last_appointment: clientData.lastAppointment?.toISOString(),
             consent_lgpd: clientData.consentLgpd,
+            status: clientData.status || 'lead',
+            pipeline_stage: clientData.pipelineStage || 'new',
+            score: clientData.score || 0,
+            source: clientData.source,
+            company: clientData.company,
+            position: clientData.position,
+            birthday: clientData.birthday?.toISOString().split('T')[0],
+            address: clientData.address,
+            social_media: clientData.socialMedia,
+            notes: clientData.notes,
+            assigned_to: clientData.assignedTo,
           },
         ])
         .select()
@@ -115,15 +138,29 @@ export const ClientsProvider: React.FC<{ children: ReactNode }> = ({ children })
 
   const updateClient = async (id: string, clientData: Partial<Client>): Promise<void> => {
     try {
+      const updateData: any = {};
+      
+      if (clientData.name !== undefined) updateData.name = clientData.name;
+      if (clientData.phone !== undefined) updateData.phone = clientData.phone;
+      if (clientData.email !== undefined) updateData.email = clientData.email;
+      if (clientData.lastAppointment !== undefined) updateData.last_appointment = clientData.lastAppointment?.toISOString();
+      if (clientData.consentLgpd !== undefined) updateData.consent_lgpd = clientData.consentLgpd;
+      if (clientData.status !== undefined) updateData.status = clientData.status;
+      if (clientData.pipelineStage !== undefined) updateData.pipeline_stage = clientData.pipelineStage;
+      if (clientData.score !== undefined) updateData.score = clientData.score;
+      if (clientData.source !== undefined) updateData.source = clientData.source;
+      if (clientData.company !== undefined) updateData.company = clientData.company;
+      if (clientData.position !== undefined) updateData.position = clientData.position;
+      if (clientData.birthday !== undefined) updateData.birthday = clientData.birthday?.toISOString().split('T')[0];
+      if (clientData.address !== undefined) updateData.address = clientData.address;
+      if (clientData.socialMedia !== undefined) updateData.social_media = clientData.socialMedia;
+      if (clientData.notes !== undefined) updateData.notes = clientData.notes;
+      if (clientData.lastContactAt !== undefined) updateData.last_contact_at = clientData.lastContactAt?.toISOString();
+      if (clientData.assignedTo !== undefined) updateData.assigned_to = clientData.assignedTo;
+
       const { error } = await supabase
         .from('clients')
-        .update({
-          name: clientData.name,
-          phone: clientData.phone,
-          email: clientData.email,
-          last_appointment: clientData.lastAppointment?.toISOString(),
-          consent_lgpd: clientData.consentLgpd,
-        })
+        .update(updateData)
         .eq('id', id);
 
       if (error) throw error;
