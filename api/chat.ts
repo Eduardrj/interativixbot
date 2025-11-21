@@ -1,168 +1,156 @@
-// @ts-ignore
-import { IncomingMessage, ServerResponse } from 'http';
-import { verifySupabaseToken, extractBearerToken } from '../lib/auth.js';
+import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
+interface ChatMessage {
+  sender: 'user' | 'bot';
+  text: string;
+}
+
+interface ChatRequestBody {
+  history: ChatMessage[];
+  prompt: string;
+  systemInstruction?: string;
+  model?: string;
+}
+
 export default async function handler(
- request: IncomingMessage & { body?: any },
- response: ServerResponse
+  req: VercelRequest,
+  res: VercelResponse
 ) {
- // CORS Headers
- response.setHeader('Access-Control-Allow-Credentials', 'true');
- response.setHeader('Access-Control-Allow-Origin', process.env.CORS_ORIGIN || 'https://interativixbot.com.br');
- response.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
- response.setHeader('Access-Control-Allow-Headers', 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version, Authorization');
- 
- if (request.method === 'OPTIONS') {
- response.statusCode = 200;
- response.end();
- return;
- }
- 
- if (request.method !== 'POST') {
- response.statusCode = 405;
- response.end(JSON.stringify({ error: 'Method not allowed' }));
- return;
- }
+  // CORS headers
+  res.setHeader('Access-Control-Allow-Credentials', 'true');
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'POST,OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
- // Try multiple header keys and fallback to query param to be resilient behind proxies
- try {
-     const headerNames = Object.keys(request.headers || {});
-     console.log('[chat] header keys:', headerNames.join(','));
-     console.log('[chat] request url:', request.url);
- } catch {}
- const headersAny = request.headers as any;
- const possibleAuthHeader =
-     headersAny?.authorization ||
-     headersAny?.Authorization ||
-     headersAny?.['x-authorization'] ||
-     headersAny?.['x-supabase-auth'] ||
-     undefined;
-    try { console.log('[chat] auth header present:', !!possibleAuthHeader); } catch {}
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
 
- let token = extractBearerToken(possibleAuthHeader as string | undefined);
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method not allowed' });
+  }
 
- if (!token && request.url) {
-     try {
-         const host = (headersAny?.host as string) || 'interativixbot.com.br';
-         const url = new URL(request.url, `https://${host}`);
-         const qpToken = url.searchParams.get('access_token') || url.searchParams.get('token');
-         if (qpToken) token = qpToken;
-     } catch {}
- }
- 
+  try {
+    const { history, prompt, systemInstruction, model = 'gemini-1.5-flash' } = req.body as ChatRequestBody;
 
- let userId: string;
- 
- try {
- let body = '';
- 
- for await (const chunk of request) {
- body += chunk.toString();
- }
- 
- let parsedBody;
- try {
- parsedBody = JSON.parse(body);
- } catch (e) {
- console.error("Failed to parse JSON:", body);
- response.statusCode = 400;
- response.end(JSON.stringify({ error: 'Invalid JSON in request body' }));
- return;
- }
+    const isPerplexity = model?.includes('perplexity');
 
- // As a fallback, accept token from request body
- if (!token) {
-     token = parsedBody?.accessToken || parsedBody?.token || null;
- }
+    if (isPerplexity) {
+      return await handlePerplexity(req, res, { history, prompt, systemInstruction, model });
+    } else {
+      return await handleGemini(req, res, { history, prompt, systemInstruction, model });
+    }
+  } catch (error: any) {
+    console.error('Chat API Error:', error);
+    return res.status(500).json({ error: error.message || 'Internal server error' });
+  }
+}
 
- if (!token) {
-     response.statusCode = 401;
-     response.end(JSON.stringify({ error: 'Missing or invalid Authorization header. Please provide a valid JWT token.' }));
-     return;
- }
+async function handleGemini(
+  req: VercelRequest,
+  res: VercelResponse,
+  options: ChatRequestBody
+) {
+  const { history, prompt, systemInstruction, model = 'gemini-1.5-flash' } = options;
 
- try {
-     const verified = await verifySupabaseToken(token, process.env.VITE_SUPABASE_URL || '');
-     userId = verified.userId;
- } catch (authError) {
-     console.error('Authentication failed:', authError);
-     response.statusCode = 401;
-     response.end(JSON.stringify({ error: 'Invalid or expired token' }));
-     return;
- }
- 
- const { history = [], prompt, systemInstruction, model = 'gemini-1.5-flash' } = parsedBody;
- 
- if (!prompt) {
- response.statusCode = 400;
- response.end(JSON.stringify({ error: 'Prompt is required' }));
- return;
- }
- 
- const apiKey = process.env.VITE_GEMINI_API_KEY;
- if (!apiKey) {
- console.error("Gemini API key not found in environment variables");
- response.statusCode = 500;
- response.end(JSON.stringify({ error: 'API key not configured' }));
- return;
- }
- 
- try {
- // Initialize Google Generative AI
- const genAI = new GoogleGenerativeAI(apiKey);
- const geminiModel = genAI.getGenerativeModel({ model: model });
+  const apiKey = process.env.GEMINI_API_KEY;
 
- // Build conversation history for Gemini
- const chatHistory = [];
- 
- history.forEach((msg: { sender: string; text: string }) => {
- chatHistory.push({
- role: msg.sender === 'user' ? 'user' : 'model',
- parts: [{ text: msg.text }],
- });
- });
+  if (!apiKey) {
+    return res.status(500).json({ error: 'Gemini API key not configured' });
+  }
 
- // Start chat with history
- const chat = geminiModel.startChat({
- history: chatHistory,
- generationConfig: {
- temperature: 0.7,
- maxOutputTokens: 1024,
- },
- systemInstruction: systemInstruction || 'Você é um assistente prestativo e educativo.',
- });
+  try {
+    const genAI = new GoogleGenerativeAI(apiKey);
+    const geminiModel = genAI.getGenerativeModel({ model });
 
- // Send message and get response
- const result = await chat.sendMessage(prompt);
- const replyText = result.response.text();
- 
- response.statusCode = 200;
- response.setHeader('Content-Type', 'application/json');
- response.end(JSON.stringify({ reply: replyText, userId }));
- 
- } catch (apiError: any) {
- console.error("Error calling Gemini API:", apiError);
- 
- // Handle specific Gemini API errors
- if (apiError.message?.includes('API_KEY_INVALID')) {
-     response.statusCode = 500;
-     response.end(JSON.stringify({ error: 'Invalid API key for AI service' }));
-     return;
- }
- 
- if (apiError.message?.includes('Quota exceeded')) {
-     response.statusCode = 429;
-     response.end(JSON.stringify({ error: 'AI service quota exceeded. Please try again later.' }));
-     return;
- }
- 
- response.statusCode = 502;
- response.end(JSON.stringify({ error: 'Error connecting to AI service. Please try again later.' }));
- }
- } catch (error) {
- console.error("Error in /api/chat:", error);
- response.statusCode = 500;
- response.end(JSON.stringify({ error: 'Failed to process chat message' }));
- }
+    let chatHistory = history.map(msg => ({
+      role: msg.sender === 'user' ? 'user' : 'model',
+      parts: [{ text: msg.text }],
+    }));
+
+    if (chatHistory.length > 0 && chatHistory[0].role !== 'user') {
+      chatHistory = chatHistory.slice(1);
+    }
+
+    const chat = geminiModel.startChat({
+      history: chatHistory,
+      generationConfig: {
+        temperature: 0.7,
+        maxOutputTokens: 2048,
+      },
+    });
+
+    const finalPrompt = systemInstruction 
+      ? `${systemInstruction}\n\nUsuário: ${prompt}`
+      : prompt;
+
+    const result = await chat.sendMessage(finalPrompt);
+    const response = result.response.text();
+
+    return res.status(200).json({ response });
+  } catch (error: any) {
+    console.error('Gemini Error:', error);
+    return res.status(500).json({ error: error.message || 'Gemini API error' });
+  }
+}
+
+async function handlePerplexity(
+  req: VercelRequest,
+  res: VercelResponse,
+  options: ChatRequestBody
+) {
+  const { history, prompt, systemInstruction, model = 'perplexity-sonar' } = options;
+
+  const apiKey = process.env.PERPLEXITY_API_KEY;
+
+  if (!apiKey) {
+    return res.status(500).json({ error: 'Perplexity API key not configured' });
+  }
+
+  try {
+    const perplexityModel = model.includes('pro') ? 'sonar-pro' : 'sonar';
+
+    const messages: any[] = [];
+    
+    if (systemInstruction) {
+      messages.push({ role: 'system', content: systemInstruction });
+    }
+
+    history.forEach(msg => {
+      messages.push({
+        role: msg.sender === 'user' ? 'user' : 'assistant',
+        content: msg.text
+      });
+    });
+
+    messages.push({ role: 'user', content: prompt });
+
+    const response = await fetch('https://api.perplexity.ai/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: perplexityModel,
+        messages,
+        temperature: 0.7,
+        max_tokens: 2048,
+      }),
+    });
+
+    if (!response.ok) {
+      const error = await response.text();
+      throw new Error(`Perplexity API error: ${error}`);
+    }
+
+    const data = await response.json();
+    const text = data.choices?.[0]?.message?.content || 'Sem resposta';
+
+    return res.status(200).json({ response: text });
+  } catch (error: any) {
+    console.error('Perplexity Error:', error);
+    return res.status(500).json({ error: error.message || 'Perplexity API error' });
+  }
 }

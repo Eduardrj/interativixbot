@@ -13,9 +13,36 @@ interface ChatOptions {
 }
 
 export async function sendChatMessage(options: ChatOptions): Promise<string> {
+  // Chamar API do servidor para proteger as chaves
+  try {
+    const response = await fetch('/api/chat', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(options),
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Erro ao comunicar com o servidor');
+    }
+
+    const data = await response.json();
+    return data.response;
+  } catch (error: any) {
+    // Se falhar, tentar diretamente (dev mode)
+    if (process.env.NODE_ENV === 'development') {
+      return sendChatMessageDirect(options);
+    }
+    throw error;
+  }
+}
+
+// Função legacy para desenvolvimento local
+async function sendChatMessageDirect(options: ChatOptions): Promise<string> {
   const { history, prompt, systemInstruction, model = 'gemini-1.5-flash' } = options;
 
-  // Verificar qual modelo está sendo usado
   const isPerplexity = model?.includes('perplexity');
   
   if (isPerplexity) {
