@@ -660,17 +660,3 @@ export interface TransactionFormData {
   transaction_date: string;
   notes?: string;
 }
-
-// =====================================================
-// EXPORTS
-// =====================================================
-
-export type {
-  BaseEntity,
-  BusinessHours,
-  CompanySettings,
-  Address,
-  UserPreferences,
-  Permission,
-  ServiceSettings
-};
