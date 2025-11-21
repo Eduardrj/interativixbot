@@ -224,6 +224,68 @@ export interface UserPermissions {
     [module: string]: string[]; // module -> actions[]
 }
 
+// Kanban Types
+export interface KanbanColumn {
+    id: string;
+    companyId: string;
+    name: string;
+    description?: string;
+    color: string;
+    position: number;
+    isDefault: boolean;
+    limitWip?: number;
+    createdAt: Date;
+    updatedAt: Date;
+}
+
+export interface KanbanCard {
+    id: string;
+    companyId: string;
+    columnId: string;
+    appointmentId?: string;
+    title: string;
+    description?: string;
+    clientName?: string;
+    clientPhone?: string;
+    assignedTo?: string;
+    priority: 'low' | 'medium' | 'high' | 'urgent';
+    tags?: string[];
+    position: number;
+    dueDate?: Date;
+    completedAt?: Date;
+    createdBy?: string;
+    createdAt: Date;
+    updatedAt: Date;
+}
+
+export interface KanbanMovement {
+    id: string;
+    cardId: string;
+    fromColumnId?: string;
+    toColumnId: string;
+    movedBy?: string;
+    movedAt: Date;
+    notes?: string;
+}
+
+export interface KanbanComment {
+    id: string;
+    cardId: string;
+    userId?: string;
+    comment: string;
+    createdAt: Date;
+    updatedAt: Date;
+}
+
+export interface KanbanStats {
+    columnId: string;
+    columnName: string;
+    cardCount: number;
+    highPriorityCount: number;
+    overdueCount: number;
+    avgTimeInColumn: string;
+}
+
 export type Page = 
   | 'dashboard' 
   | 'agendamentos' 

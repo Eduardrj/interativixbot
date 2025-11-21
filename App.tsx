@@ -14,6 +14,7 @@ import { ClientTagsProvider } from './contexts/ClientTagsContext';
 import { ClientInteractionsProvider } from './contexts/ClientInteractionsContext';
 import { FinancialProvider } from './contexts/FinancialContext';
 import { PermissionsProvider } from './contexts/PermissionsContext';
+import { KanbanProvider } from './contexts/KanbanContext';
 
 // Carregamento dinâmico (lazy loading) dos componentes de página
 const Dashboard = lazy(() => import('./components/Dashboard'));
@@ -100,15 +101,17 @@ const App: React.FC = () => {
           <ClientTagsProvider>
             <ClientInteractionsProvider>
               <FinancialProvider>
-                <AppointmentsProvider>
-                  <ClientsProvider>
-                    <ServicesProvider>
-                      <ProfessionalsProvider>
-                        <AppContent />
-                      </ProfessionalsProvider>
-                    </ServicesProvider>
-                  </ClientsProvider>
-                </AppointmentsProvider>
+                <KanbanProvider>
+                  <AppointmentsProvider>
+                    <ClientsProvider>
+                      <ServicesProvider>
+                        <ProfessionalsProvider>
+                          <AppContent />
+                        </ProfessionalsProvider>
+                      </ServicesProvider>
+                    </ClientsProvider>
+                  </AppointmentsProvider>
+                </KanbanProvider>
               </FinancialProvider>
             </ClientInteractionsProvider>
           </ClientTagsProvider>
