@@ -42,6 +42,7 @@ const Sidebar: React.FC<SidebarProps> = ({ currentPage, setCurrentPage, isOpen, 
 
   const mainNavItems = [
     { page: 'dashboard', label: 'Dashboard', icon: ICONS.dashboard },
+    { page: 'analytics', label: 'Analytics', icon: ICONS.barChart },
     { page: 'agendamentos', label: 'Agendamentos', icon: ICONS.calendar },
     { page: 'kanban', label: 'Kanban Board', icon: ICONS.trello },
   ];

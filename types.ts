@@ -390,6 +390,107 @@ export interface IntegrationStats {
     lastSyncAt?: Date;
 }
 
+// Analytics Module
+export interface AnalyticsMetric {
+    id: string;
+    companyId: string;
+    metricType: 'revenue' | 'expenses' | 'profit' | 'appointments' | 'clients' | 'conversion' | 'cancellation' | 'custom';
+    metricCategory: 'financial' | 'operational' | 'customer' | 'employee';
+    periodType: 'daily' | 'weekly' | 'monthly' | 'quarterly' | 'yearly';
+    periodStart: Date;
+    periodEnd: Date;
+    value: number;
+    previousValue?: number;
+    targetValue?: number;
+    unit?: string;
+    metadata?: Record<string, any>;
+    createdAt: Date;
+    updatedAt: Date;
+}
+
+export interface AnalyticsDashboard {
+    id: string;
+    companyId: string;
+    userId?: string;
+    name: string;
+    description?: string;
+    isDefault: boolean;
+    isPublic: boolean;
+    layout: Record<string, any>; // Grid layout configuration
+    widgets: Record<string, any>[]; // Widget configurations
+    filters?: Record<string, any>;
+    createdAt: Date;
+    updatedAt: Date;
+}
+
+export interface AnalyticsReport {
+    id: string;
+    companyId: string;
+    createdBy: string;
+    name: string;
+    description?: string;
+    reportType: 'financial' | 'operational' | 'customer' | 'custom';
+    parameters: Record<string, any>;
+    schedule?: Record<string, any>; // Cron-like schedule
+    lastGeneratedAt?: Date;
+    isActive: boolean;
+    recipients: string[];
+    format: 'pdf' | 'csv' | 'xlsx';
+    createdAt: Date;
+    updatedAt: Date;
+}
+
+export interface AnalyticsEvent {
+    id: string;
+    companyId: string;
+    userId?: string;
+    eventType: string; // 'page_view', 'button_click', 'feature_used', etc
+    eventCategory: 'navigation' | 'interaction' | 'transaction' | 'error';
+    entityType?: string;
+    entityId?: string;
+    properties?: Record<string, any>;
+    sessionId?: string;
+    createdAt: Date;
+}
+
+export interface AnalyticsKPI {
+    id: string;
+    companyId: string;
+    name: string;
+    description?: string;
+    calculationFormula: string; // SQL expression
+    targetValue?: number;
+    unit?: string;
+    frequency: 'daily' | 'weekly' | 'monthly';
+    isActive: boolean;
+    alertThreshold?: number;
+    alertType?: 'above' | 'below';
+    notificationEmails?: string[];
+    createdAt: Date;
+    updatedAt: Date;
+}
+
+export interface DashboardKPI {
+    kpiName: string;
+    currentValue: number;
+    previousValue: number;
+    variationPercent: number;
+    trend: 'up' | 'down' | 'stable';
+    unit: string;
+}
+
+export interface RevenueChartData {
+    periodLabel: string;
+    revenue: number;
+    expenses: number;
+    profit: number;
+}
+
+export interface ChartDataPoint {
+    label: string;
+    value: number;
+}
+
 export type Page = 
   | 'dashboard' 
   | 'agendamentos' 
@@ -407,4 +508,5 @@ export type Page =
   | 'kanban'
   | 'crm'
   | 'permissoes'
-  | 'integracoes';
+  | 'integracoes'
+  | 'analytics';

@@ -16,6 +16,7 @@ import { FinancialProvider } from './contexts/FinancialContext';
 import { PermissionsProvider } from './contexts/PermissionsContext';
 import { KanbanProvider } from './contexts/KanbanContext';
 import { IntegrationsProvider } from './contexts/IntegrationsContext';
+import { AnalyticsProvider } from './contexts/AnalyticsContext';
 
 // Carregamento dinâmico (lazy loading) dos componentes de página
 const Dashboard = lazy(() => import('./components/Dashboard'));
@@ -37,6 +38,7 @@ const ClientDetails = lazy(() => import('./components/ClientDetails'));
 const FinancialDashboard = lazy(() => import('./components/FinancialDashboard'));
 const PermissionsManager = lazy(() => import('./components/PermissionsManager'));
 const IntegrationsManager = lazy(() => import('./components/IntegrationsManager'));
+const AnalyticsDashboard = lazy(() => import('./components/AnalyticsDashboard'));
 
 const LoadingFallback: React.FC = () => (
   <div className="flex h-full w-full items-center justify-center">
@@ -66,6 +68,7 @@ const AppContent: React.FC = () => {
       case 'relatorios': return <Reports />;
       case 'permissoes': return <PermissionsManager />;
       case 'integracoes': return <IntegrationsManager />;
+      case 'analytics': return <AnalyticsDashboard />;
       case 'configuracoes': return <Settings />;
       case 'faq': return <Faq />;
       case 'manualUsuario': return <ManualUsuario />;
@@ -114,15 +117,17 @@ const App: React.FC = () => {
               <FinancialProvider>
                 <KanbanProvider>
                   <IntegrationsProvider>
-                    <AppointmentsProvider>
-                      <ClientsProvider>
-                        <ServicesProvider>
-                          <ProfessionalsProvider>
-                            <AppContent />
-                          </ProfessionalsProvider>
-                        </ServicesProvider>
-                      </ClientsProvider>
-                    </AppointmentsProvider>
+                    <AnalyticsProvider>
+                      <AppointmentsProvider>
+                        <ClientsProvider>
+                          <ServicesProvider>
+                            <ProfessionalsProvider>
+                              <AppContent />
+                            </ProfessionalsProvider>
+                          </ServicesProvider>
+                        </ClientsProvider>
+                      </AppointmentsProvider>
+                    </AnalyticsProvider>
                   </IntegrationsProvider>
                 </KanbanProvider>
               </FinancialProvider>
