@@ -59,6 +59,7 @@ const Sidebar: React.FC<SidebarProps> = ({ currentPage, setCurrentPage, isOpen, 
     { page: 'planos', label: 'Planos & Cobrança', icon: ICONS.creditCard },
     { page: 'relatorios', label: 'Relatórios', icon: ICONS.fileText },
     { page: 'permissoes', label: 'Permissões', icon: ICONS.lock },
+    { page: 'integracoes', label: 'Integrações', icon: ICONS.zap },
     { page: 'configuracoes', label: 'IA & Configurações', icon: ICONS.settings },
   ];
 

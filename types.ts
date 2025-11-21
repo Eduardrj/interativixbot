@@ -286,6 +286,110 @@ export interface KanbanStats {
     avgTimeInColumn: string;
 }
 
+// =====================================================
+// INTEGRATIONS TYPES
+// =====================================================
+
+export interface IntegrationConfig {
+    id: string;
+    companyId: string;
+    provider: 'whatsapp' | 'google_calendar' | 'zapier' | 'webhook';
+    name: string;
+    isActive: boolean;
+    config: Record<string, any>; // API keys, tokens, etc
+    createdAt: Date;
+    updatedAt: Date;
+}
+
+export interface IntegrationSyncLog {
+    id: string;
+    companyId: string;
+    integrationId?: string;
+    provider: string;
+    syncType: string; // 'appointment_create', 'message_send', etc
+    status: 'success' | 'error' | 'pending';
+    entityType?: string;
+    entityId?: string;
+    requestData?: Record<string, any>;
+    responseData?: Record<string, any>;
+    errorMessage?: string;
+    syncedAt: Date;
+    createdAt: Date;
+}
+
+export interface WhatsAppMessage {
+    id: string;
+    companyId: string;
+    integrationId?: string;
+    clientId: string;
+    appointmentId?: string;
+    phone: string;
+    message: string;
+    messageType: 'text' | 'template' | 'media';
+    status: 'pending' | 'sent' | 'delivered' | 'read' | 'failed';
+    externalId?: string;
+    templateName?: string;
+    templateParams?: Record<string, any>;
+    errorMessage?: string;
+    sentAt?: Date;
+    deliveredAt?: Date;
+    readAt?: Date;
+    createdAt: Date;
+    updatedAt: Date;
+}
+
+export interface CalendarEvent {
+    id: string;
+    companyId: string;
+    integrationId?: string;
+    appointmentId: string;
+    externalEventId: string;
+    calendarId: string;
+    syncStatus: 'synced' | 'pending' | 'error';
+    lastSyncAt?: Date;
+    errorMessage?: string;
+    createdAt: Date;
+    updatedAt: Date;
+}
+
+export interface WebhookEndpoint {
+    id: string;
+    companyId: string;
+    name: string;
+    url: string;
+    method: 'POST' | 'GET' | 'PUT';
+    headers: Record<string, string>;
+    events: string[]; // ['appointment.created', 'client.created', etc]
+    isActive: boolean;
+    secretKey?: string;
+    createdBy?: string;
+    createdAt: Date;
+    updatedAt: Date;
+}
+
+export interface WebhookDelivery {
+    id: string;
+    webhookId: string;
+    companyId: string;
+    eventType: string;
+    payload: Record<string, any>;
+    statusCode?: number;
+    responseBody?: string;
+    errorMessage?: string;
+    attemptCount: number;
+    deliveredAt: Date;
+    createdAt: Date;
+}
+
+export interface IntegrationStats {
+    provider: string;
+    activeConfigs: number;
+    totalSyncs: number;
+    successSyncs: number;
+    errorSyncs: number;
+    lastSyncAt?: Date;
+}
+
 export type Page = 
   | 'dashboard' 
   | 'agendamentos' 
@@ -302,4 +406,5 @@ export type Page =
   | 'manualAdmin'
   | 'kanban'
   | 'crm'
-  | 'permissoes';
+  | 'permissoes'
+  | 'integracoes';
