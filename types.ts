@@ -69,6 +69,7 @@ export type Page =
   | 'servicos'
   | 'profissionais'
   | 'clientes'
+  | 'empresas'
   | 'planos'
   | 'relatorios'
   | 'configuracoes'

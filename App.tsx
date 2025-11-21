@@ -9,6 +9,7 @@ import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { ClientsProvider } from './contexts/ClientsContext';
 import { ServicesProvider } from './contexts/ServicesContext';
 import { ProfessionalsProvider } from './contexts/ProfessionalsContext';
+import { CompaniesProvider } from './contexts/CompaniesContext';
 
 // Carregamento dinâmico (lazy loading) dos componentes de página
 const Dashboard = lazy(() => import('./components/Dashboard'));
@@ -17,6 +18,7 @@ const Settings = lazy(() => import('./components/Settings'));
 const Services = lazy(() => import('./components/Services'));
 const Professionals = lazy(() => import('./components/Professionals'));
 const Clients = lazy(() => import('./components/Clients'));
+const Companies = lazy(() => import('./components/Companies'));
 const Billing = lazy(() => import('./components/Billing'));
 const Reports = lazy(() => import('./components/Reports'));
 const Faq = lazy(() => import('./components/Faq'));
@@ -45,6 +47,7 @@ const AppContent: React.FC = () => {
       case 'servicos': return <Services />;
       case 'profissionais': return <Professionals />;
       case 'clientes': return <Clients />;
+      case 'empresas': return <Companies />;
       case 'planos': return <Billing />;
       case 'relatorios': return <Reports />;
       case 'configuracoes': return <Settings />;
@@ -88,15 +91,17 @@ const AppContent: React.FC = () => {
 const App: React.FC = () => {
   return (
     <AuthProvider>
-      <AppointmentsProvider>
-        <ClientsProvider>
-          <ServicesProvider>
-            <ProfessionalsProvider>
-              <AppContent />
-            </ProfessionalsProvider>
-          </ServicesProvider>
-        </ClientsProvider>
-      </AppointmentsProvider>
+      <CompaniesProvider>
+        <AppointmentsProvider>
+          <ClientsProvider>
+            <ServicesProvider>
+              <ProfessionalsProvider>
+                <AppContent />
+              </ProfessionalsProvider>
+            </ServicesProvider>
+          </ClientsProvider>
+        </AppointmentsProvider>
+      </CompaniesProvider>
     </AuthProvider>
   );
 };
