@@ -193,6 +193,37 @@ export interface FinancialMetrics {
     overdueCount: number;
 }
 
+// Permissions Types
+export interface Permission {
+    id: string;
+    module: string;
+    action: string;
+    description?: string;
+    createdAt: Date;
+}
+
+export interface CompanyRole {
+    id: string;
+    companyId: string;
+    name: string;
+    description?: string;
+    isSystemRole: boolean;
+    permissions: Permission[];
+    createdAt: Date;
+    updatedAt: Date;
+}
+
+export interface RolePermission {
+    roleId: string;
+    permissionId: string;
+    granted: boolean;
+    createdAt: Date;
+}
+
+export interface UserPermissions {
+    [module: string]: string[]; // module -> actions[]
+}
+
 export type Page = 
   | 'dashboard' 
   | 'agendamentos' 
