@@ -221,13 +221,11 @@ const Settings: React.FC = () => {
                              <select value={aiModel} onChange={e => setAiModel(e.target.value)} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm">
                                 <option value="gemini-2.5-flash">Google Gemini 2.5 Flash</option>
                                 <option value="gemini-2.5-pro">Google Gemini 2.5 Pro</option>
-                                <option value="perplexity-sonar">Perplexity Sonar</option>
-                                <option value="perplexity-sonar-pro">Perplexity Sonar Pro</option>
                             </select>
                             <p className="mt-2 text-xs text-gray-500">
-                                <strong>Gemini:</strong> Rápido e econômico (Flash) ou mais preciso (Pro)
+                                <strong>Flash:</strong> Rápido e econômico para conversas do dia-a-dia
                                 <br />
-                                <strong>Perplexity:</strong> Busca em tempo real e respostas atualizadas
+                                <strong>Pro:</strong> Mais preciso e detalhado para análises complexas
                             </p>
                         </div>
                         <div>
