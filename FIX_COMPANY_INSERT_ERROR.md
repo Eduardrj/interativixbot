@@ -1,10 +1,10 @@
 # Correção: Erro ao Criar Empresa
 
-## Problema Identificado
+## Problemas Identificados
 
-O erro "Erro ao salvar empresa. Tente novamente." ocorre porque a tabela `companies` não possui uma policy de RLS (Row Level Security) para operações de **INSERT**.
+O erro "Erro ao salvar empresa. Tente novamente." ocorre por **DOIS problemas**:
 
-### Análise Técnica
+### Problema 1: RLS Policy de INSERT Ausente
 
 No arquivo `supabase/migrations/001_companies_multi_tenant.sql`, foram criadas policies para:
 - ✅ SELECT (linha 58): "Users can see their companies"
@@ -13,14 +13,28 @@ No arquivo `supabase/migrations/001_companies_multi_tenant.sql`, foram criadas p
 
 Sem a policy de INSERT, mesmo usuários autenticados não conseguem criar empresas no Supabase, pois o RLS bloqueia a operação.
 
+### Problema 2: Foreign Key Incorreta ⚠️ **CRÍTICO**
+
+Na migration `001_companies_multi_tenant.sql` linha 26:
+```sql
+user_id UUID REFERENCES public.users(id) ON DELETE CASCADE
+```
+
+❌ **ERRO**: A tabela referenciada deveria ser `auth.users(id)`, não `public.users(id)`
+
+O Supabase Auth gerencia usuários no schema `auth.users`, não `public.users`. Isso causa erro ao tentar inserir na tabela `company_users` após criar a empresa.
+
 ## Solução
 
-### Passo 1: Executar Migration no Supabase
+### Passo 1: Executar Migrations no Supabase (ORDEM IMPORTANTE!)
 
 1. Acesse o **Supabase Dashboard**: https://app.supabase.com
 2. Selecione seu projeto
 3. Vá em **SQL Editor**
-4. Copie e execute o conteúdo de: `supabase/migrations/008_fix_companies_insert_policy.sql`
+
+#### Migration 008: Adicionar RLS Policies
+
+Copie e execute o conteúdo de: `supabase/migrations/008_fix_companies_insert_policy.sql`
 
 ```sql
 -- Adicionar policy de INSERT para companies
@@ -38,7 +52,22 @@ CREATE POLICY "Users can add themselves to companies" ON public.company_users
     WITH CHECK (user_id = auth.uid());
 ```
 
-5. Clique em **Run** (ou Ctrl+Enter)
+#### Migration 009: Corrigir Foreign Key ⚠️ **CRÍTICO**
+
+Copie e execute o conteúdo de: `supabase/migrations/009_fix_company_users_fkey.sql`
+
+```sql
+-- Remover constraint antiga (incorreta)
+ALTER TABLE public.company_users 
+DROP CONSTRAINT IF EXISTS company_users_user_id_fkey;
+
+-- Adicionar nova constraint correta apontando para auth.users
+ALTER TABLE public.company_users
+ADD CONSTRAINT company_users_user_id_fkey 
+FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE;
+```
+
+5. Clique em **Run** (ou Ctrl+Enter) para cada migration
 6. Aguarde a confirmação: "Success. No rows returned"
 
 ### Passo 2: Verificar as Policies
