@@ -31,6 +31,10 @@ const ManualUsuario = lazy(() => import('./components/ManualUsuario'));
 const ManualAdmin = lazy(() => import('./components/ManualAdmin'));
 const LandingPage = lazy(() => import('./components/LandingPage'));
 const LoginPage = lazy(() => import('./components/LoginPage'));
+const KanbanBoardMain = lazy(() => import('./components/KanbanBoard'));
+const ClientDetails = lazy(() => import('./components/ClientDetails'));
+const FinancialDashboard = lazy(() => import('./components/FinancialDashboard'));
+const PermissionsManager = lazy(() => import('./components/PermissionsManager'));
 
 const LoadingFallback: React.FC = () => (
   <div className="flex h-full w-full items-center justify-center">
@@ -49,12 +53,16 @@ const AppContent: React.FC = () => {
     switch (currentPage) {
       case 'dashboard': return <Dashboard />;
       case 'agendamentos': return <Appointments />;
+      case 'kanban': return <KanbanBoardMain />;
       case 'servicos': return <Services />;
       case 'profissionais': return <Professionals />;
       case 'clientes': return <Clients />;
+      case 'crm': return <ClientDetails />;
       case 'empresas': return <Companies />;
+      case 'financeiro': return <FinancialDashboard />;
       case 'planos': return <Billing />;
       case 'relatorios': return <Reports />;
+      case 'permissoes': return <PermissionsManager />;
       case 'configuracoes': return <Settings />;
       case 'faq': return <Faq />;
       case 'manualUsuario': return <ManualUsuario />;

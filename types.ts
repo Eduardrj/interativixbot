@@ -299,4 +299,7 @@ export type Page =
   | 'configuracoes'
   | 'faq'
   | 'manualUsuario'
-  | 'manualAdmin';
+  | 'manualAdmin'
+  | 'kanban'
+  | 'crm'
+  | 'permissoes';

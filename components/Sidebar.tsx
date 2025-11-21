@@ -43,10 +43,12 @@ const Sidebar: React.FC<SidebarProps> = ({ currentPage, setCurrentPage, isOpen, 
   const mainNavItems = [
     { page: 'dashboard', label: 'Dashboard', icon: ICONS.dashboard },
     { page: 'agendamentos', label: 'Agendamentos', icon: ICONS.calendar },
+    { page: 'kanban', label: 'Kanban Board', icon: ICONS.trello },
   ];
   
   const managementNavItems = [
      { page: 'clientes', label: 'Clientes', icon: ICONS.users },
+     { page: 'crm', label: 'CRM Detalhado', icon: ICONS.target },
     { page: 'profissionais', label: 'Profissionais', icon: ICONS.briefcase },
     { page: 'servicos', label: 'Serviços', icon: ICONS.scissors },
     { page: 'empresas', label: 'Empresas', icon: ICONS.building },
@@ -56,6 +58,7 @@ const Sidebar: React.FC<SidebarProps> = ({ currentPage, setCurrentPage, isOpen, 
     { page: 'financeiro', label: 'Financeiro', icon: ICONS.dollarSign },
     { page: 'planos', label: 'Planos & Cobrança', icon: ICONS.creditCard },
     { page: 'relatorios', label: 'Relatórios', icon: ICONS.fileText },
+    { page: 'permissoes', label: 'Permissões', icon: ICONS.lock },
     { page: 'configuracoes', label: 'IA & Configurações', icon: ICONS.settings },
   ];
 
