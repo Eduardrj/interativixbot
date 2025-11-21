@@ -116,6 +116,83 @@ export interface ClientInteraction {
     updatedAt: Date;
 }
 
+// Financial Types
+export interface FinancialCategory {
+    id: string;
+    companyId: string;
+    name: string;
+    type: 'income' | 'expense';
+    color: string;
+    icon?: string;
+    description?: string;
+    isDefault: boolean;
+    createdAt: Date;
+}
+
+export interface FinancialTransaction {
+    id: string;
+    companyId: string;
+    categoryId?: string;
+    type: 'income' | 'expense';
+    amount: number;
+    description: string;
+    notes?: string;
+    status: 'pending' | 'paid' | 'overdue' | 'cancelled';
+    paymentMethod?: 'cash' | 'credit_card' | 'debit_card' | 'pix' | 'bank_transfer' | 'check' | 'other';
+    dueDate: Date;
+    paidDate?: Date;
+    clientId?: string;
+    appointmentId?: string;
+    recurrence?: 'none' | 'daily' | 'weekly' | 'monthly' | 'yearly';
+    recurrenceEndDate?: Date;
+    parentTransactionId?: string;
+    attachedFileUrl?: string;
+    createdBy?: string;
+    createdAt: Date;
+    updatedAt: Date;
+}
+
+export interface FinancialGoal {
+    id: string;
+    companyId: string;
+    name: string;
+    description?: string;
+    type: 'income' | 'expense' | 'profit';
+    targetAmount: number;
+    currentAmount: number;
+    startDate: Date;
+    endDate: Date;
+    status: 'active' | 'completed' | 'cancelled';
+    createdAt: Date;
+    updatedAt: Date;
+}
+
+export interface FinancialAccount {
+    id: string;
+    companyId: string;
+    name: string;
+    type: 'checking' | 'savings' | 'cash' | 'credit_card' | 'other';
+    bankName?: string;
+    accountNumber?: string;
+    initialBalance: number;
+    currentBalance: number;
+    color: string;
+    isActive: boolean;
+    createdAt: Date;
+    updatedAt: Date;
+}
+
+export interface FinancialMetrics {
+    totalIncome: number;
+    totalExpense: number;
+    netProfit: number;
+    paidIncome: number;
+    paidExpense: number;
+    pendingIncome: number;
+    pendingExpense: number;
+    overdueCount: number;
+}
+
 export type Page = 
   | 'dashboard' 
   | 'agendamentos' 
@@ -123,6 +200,7 @@ export type Page =
   | 'profissionais'
   | 'clientes'
   | 'empresas'
+  | 'financeiro'
   | 'planos'
   | 'relatorios'
   | 'configuracoes'

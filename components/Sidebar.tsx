@@ -53,6 +53,7 @@ const Sidebar: React.FC<SidebarProps> = ({ currentPage, setCurrentPage, isOpen, 
   ];
 
   const businessNavItems = [
+    { page: 'financeiro', label: 'Financeiro', icon: ICONS.dollarSign },
     { page: 'planos', label: 'Planos & Cobrança', icon: ICONS.creditCard },
     { page: 'relatorios', label: 'Relatórios', icon: ICONS.fileText },
     { page: 'configuracoes', label: 'IA & Configurações', icon: ICONS.settings },
