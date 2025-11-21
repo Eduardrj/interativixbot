@@ -1,0 +1,9 @@
+User-agent: *
+Allow: /
+
+# Sitemap
+Sitemap: https://interativixbot.vercel.app/sitemap.xml
+
+# Disallow admin/internal paths
+Disallow: /api/
+Disallow: /*.json$
