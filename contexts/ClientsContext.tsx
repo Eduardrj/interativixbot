@@ -2,6 +2,7 @@ import React, { createContext, useState, useContext, useEffect, ReactNode } from
 import { Client } from '../types';
 import { supabase } from '../lib/supabaseClient';
 import { useAuth } from './AuthContext';
+import { useCompanies } from './CompaniesContext';
 
 interface ClientsContextType {
   clients: Client[];
@@ -17,9 +18,10 @@ export const ClientsProvider: React.FC<{ children: ReactNode }> = ({ children })
   const [clients, setClients] = useState<Client[]>([]);
   const [loading, setLoading] = useState(true);
   const { user } = useAuth();
+  const { currentCompany } = useCompanies();
 
   useEffect(() => {
-    if (!user) {
+    if (!user || !currentCompany) {
       setClients([]);
       setLoading(false);
       return;
@@ -31,7 +33,7 @@ export const ClientsProvider: React.FC<{ children: ReactNode }> = ({ children })
         const { data, error } = await supabase
           .from('clients')
           .select('*')
-          .eq('user_id', user.id)
+          .eq('company_id', currentCompany.id)
           .order('created_at', { ascending: false });
 
         if (error) throw error;
@@ -56,14 +58,14 @@ export const ClientsProvider: React.FC<{ children: ReactNode }> = ({ children })
     loadClients();
 
     const subscription = supabase
-      .channel(`clients:${user.id}`)
+      .channel(`clients:${currentCompany.id}`)
       .on(
         'postgres_changes',
         {
           event: '*',
           schema: 'public',
           table: 'clients',
-          filter: `user_id=eq.${user.id}`,
+          filter: `company_id=eq.${currentCompany.id}`,
         },
         () => {
           loadClients();
@@ -74,17 +76,18 @@ export const ClientsProvider: React.FC<{ children: ReactNode }> = ({ children })
     return () => {
       subscription.unsubscribe();
     };
-  }, [user]);
+  }, [user, currentCompany]);
 
   const addClient = async (clientData: Omit<Client, 'id'>): Promise<Client> => {
     try {
       if (!user) throw new Error('Usuário não autenticado');
+      if (!currentCompany) throw new Error('Nenhuma empresa selecionada');
 
       const { data, error } = await supabase
         .from('clients')
         .insert([
           {
-            user_id: user.id,
+            company_id: currentCompany.id,
             name: clientData.name,
             phone: clientData.phone,
             email: clientData.email,

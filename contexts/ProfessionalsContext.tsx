@@ -2,6 +2,7 @@ import React, { createContext, useState, useContext, useEffect, ReactNode } from
 import { Professional } from '../types';
 import { supabase } from '../lib/supabaseClient';
 import { useAuth } from './AuthContext';
+import { useCompanies } from './CompaniesContext';
 
 interface ProfessionalsContextType {
   professionals: Professional[];
@@ -17,9 +18,10 @@ export const ProfessionalsProvider: React.FC<{ children: ReactNode }> = ({ child
   const [professionals, setProfessionals] = useState<Professional[]>([]);
   const [loading, setLoading] = useState(true);
   const { user } = useAuth();
+  const { currentCompany } = useCompanies();
 
   useEffect(() => {
-    if (!user) {
+    if (!user || !currentCompany) {
       setProfessionals([]);
       setLoading(false);
       return;
@@ -31,7 +33,7 @@ export const ProfessionalsProvider: React.FC<{ children: ReactNode }> = ({ child
         const { data, error } = await supabase
           .from('professionals')
           .select('*')
-          .eq('user_id', user.id)
+          .eq('company_id', currentCompany.id)
           .order('created_at', { ascending: false });
 
         if (error) throw error;
@@ -56,14 +58,14 @@ export const ProfessionalsProvider: React.FC<{ children: ReactNode }> = ({ child
     loadProfessionals();
 
     const subscription = supabase
-      .channel(`professionals:${user.id}`)
+      .channel(`professionals:${currentCompany.id}`)
       .on(
         'postgres_changes',
         {
           event: '*',
           schema: 'public',
           table: 'professionals',
-          filter: `user_id=eq.${user.id}`,
+          filter: `company_id=eq.${currentCompany.id}`,
         },
         () => {
           loadProfessionals();
@@ -74,17 +76,18 @@ export const ProfessionalsProvider: React.FC<{ children: ReactNode }> = ({ child
     return () => {
       subscription.unsubscribe();
     };
-  }, [user]);
+  }, [user, currentCompany]);
 
   const addProfessional = async (professionalData: Omit<Professional, 'id'>): Promise<Professional> => {
     try {
       if (!user) throw new Error('Usuário não autenticado');
+      if (!currentCompany) throw new Error('Nenhuma empresa selecionada');
 
       const { data, error } = await supabase
         .from('professionals')
         .insert([
           {
-            user_id: user.id,
+            company_id: currentCompany.id,
             name: professionalData.name,
             email: professionalData.email,
             avatar_url: professionalData.avatarUrl,

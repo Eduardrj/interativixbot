@@ -4,6 +4,7 @@ import { Service, Professional } from '../types';
 import { User } from '../types';
 import { supabase } from '../lib/supabaseClient';
 import { useAuth } from './AuthContext';
+import { useCompanies } from './CompaniesContext';
 
 interface AppointmentsContextType {
   appointments: AppointmentType[];
@@ -32,10 +33,11 @@ export const AppointmentsProvider: React.FC<{ children: ReactNode }> = ({ childr
   const [appointments, setAppointments] = useState<AppointmentType[]>([]);
   const [loading, setLoading] = useState(true);
   const { user } = useAuth();
+  const { currentCompany } = useCompanies();
 
   // Carregar agendamentos do Supabase
   useEffect(() => {
-    if (!user) {
+    if (!user || !currentCompany) {
       setAppointments([]);
       setLoading(false);
       return;
@@ -47,7 +49,7 @@ export const AppointmentsProvider: React.FC<{ children: ReactNode }> = ({ childr
         const { data, error } = await supabase
           .from('appointments')
           .select('*')
-          .eq('user_id', user.id);
+          .eq('company_id', currentCompany.id);
 
         if (error) throw error;
 
@@ -81,14 +83,14 @@ export const AppointmentsProvider: React.FC<{ children: ReactNode }> = ({ childr
 
     // Inscrever-se em mudanças em tempo real
     const subscription = supabase
-      .channel(`appointments:${user.id}`)
+      .channel(`appointments:${currentCompany.id}`)
       .on(
         'postgres_changes',
         {
           event: '*',
           schema: 'public',
           table: 'appointments',
-          filter: `user_id=eq.${user.id}`,
+          filter: `company_id=eq.${currentCompany.id}`,
         },
         () => {
           loadAppointments();
@@ -99,11 +101,12 @@ export const AppointmentsProvider: React.FC<{ children: ReactNode }> = ({ childr
     return () => {
       subscription.unsubscribe();
     };
-  }, [user]);
+  }, [user, currentCompany]);
 
   const addAppointment = async (appointmentData: Omit<AppointmentType, 'id'>): Promise<AppointmentType> => {
     try {
       if (!user) throw new Error('Usuário não autenticado');
+      if (!currentCompany) throw new Error('Nenhuma empresa selecionada');
 
       const { data, error } = await supabase
         .from('appointments')
@@ -117,7 +120,7 @@ export const AppointmentsProvider: React.FC<{ children: ReactNode }> = ({ childr
             status: appointmentData.status,
             attendant_id: appointmentData.attendant.id,
             source: appointmentData.source,
-            user_id: user.id,
+            company_id: currentCompany.id,
           },
         ])
         .select()
