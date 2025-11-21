@@ -194,7 +194,7 @@ const PermissionsManager: React.FC = () => {
           </div>
 
           <div className="space-y-6">
-            {Object.entries(groupedPermissions).map(([module, perms]) => {
+            {Object.entries(groupedPermissions).map(([module, perms]: [string, Permission[]]) => {
               const rolePermIds = getRolePermissions(selectedRole.id).map(p => p.id);
               return (
                 <div key={module} className="border-b border-gray-200 pb-6 last:border-0">
